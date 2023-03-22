@@ -6,9 +6,9 @@ Application for monitoring a Nuts network. Used for security and health monitori
 To build for production:
 
 ```shell
-$ npm install
-$ npm run dist
-$ go run .
+npm install
+npm run dist
+go run .
 ```
 
 This will serve the front end from the embedded filesystem.
@@ -17,9 +17,17 @@ This will serve the front end from the embedded filesystem.
 During front-end development, you probably want to use the real filesystem and webpack in watch mode:
 
 ```shell
-$ npm install
-$ npm run watch
-$ go run . live
+npm install
+npm run watch
+go run . live
+```
+
+### Test
+
+There's a small test suite that can be run with
+
+```shell
+make test
 ```
 
 ### Docker
