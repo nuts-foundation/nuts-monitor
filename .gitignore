@@ -20,3 +20,6 @@
 # JS
 node_modules
 web/dist
+
+# Test outputs
+testmonitor

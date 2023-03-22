@@ -4,10 +4,11 @@
 FROM node:lts-alpine as frontend-builder
 WORKDIR /app
 COPY package*.json ./
+ENV NODE_ENV production
 RUN npm install
 COPY ./web ./web
 COPY ./*.config.js .
-RUN npm run build
+RUN npm run dist
 
 #
 # Build backend

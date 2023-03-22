@@ -7,7 +7,7 @@ To build for production:
 
 ```shell
 $ npm install
-$ npm run build
+$ npm run dist
 $ go run .
 ```
 
