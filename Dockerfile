@@ -1,4 +1,17 @@
-# golang alpine
+#
+# Build frontend
+#
+FROM node:lts-alpine as frontend-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY ./web ./web
+COPY ./*.config.js .
+RUN npm run build
+
+#
+# Build backend
+#
 FROM golang:1.20.2-alpine as builder
 
 ARG TARGETARCH
@@ -18,9 +31,11 @@ COPY go.sum .
 RUN go mod download && go mod verify
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s -o /opt/nuts/monitor
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o /opt/nuts/monitor
 
-# alpine
+#
+# Runtime
+#
 FROM alpine:3.17.2
 RUN apk update \
   && apk add --no-cache \

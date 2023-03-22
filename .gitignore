@@ -16,3 +16,7 @@
 
 # IDEs
 .idea
+
+# JS
+node_modules
+web/dist
