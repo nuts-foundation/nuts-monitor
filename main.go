@@ -18,6 +18,20 @@
 
 package main
 
-func main() {
+import (
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"net/http"
+)
 
+func main() {
+	e := echo.New()
+	e.HideBanner = true
+	loggerConfig := middleware.DefaultLoggerConfig
+	e.Use(middleware.LoggerWithConfig(loggerConfig))
+
+	// add status endpoint
+	e.GET("/status", func(context echo.Context) error {
+		return context.String(http.StatusOK, "OK")
+	})
 }

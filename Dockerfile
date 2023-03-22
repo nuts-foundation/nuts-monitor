@@ -30,8 +30,7 @@ RUN apk update \
 COPY --from=builder /opt/nuts/monitor /usr/bin/monitor
 
 HEALTHCHECK --start-period=30s --timeout=5s --interval=10s \
-    CMD curl -f http://localhost:1323 || exit 1
+    CMD curl -f http://localhost:1323/status || exit 1
 
 EXPOSE 1323
 ENTRYPOINT ["/usr/bin/monitor"]
-CMD ["server"]
