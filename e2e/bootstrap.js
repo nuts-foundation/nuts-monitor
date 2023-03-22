@@ -19,7 +19,7 @@ before (async () => {
         detached: true,
         stdio: 'ignore',
     });
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 5000));
 });
 
 /* call the function after puppeteer done testing */
