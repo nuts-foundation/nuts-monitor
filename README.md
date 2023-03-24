@@ -22,6 +22,12 @@ npm run watch
 go run . live
 ```
 
+Generate APIs with:
+
+```shell
+make apis
+```
+
 ### Test
 
 There's a small test suite that can be run with

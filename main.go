@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"nuts-foundation/nuts-monitor/api"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -36,6 +37,13 @@ const assetPath = "web/dist"
 var embeddedFiles embed.FS
 
 func main() {
+	e := newEchoServer()
+
+	// Start server
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1323)))
+}
+
+func newEchoServer() *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	loggerConfig := middleware.DefaultLoggerConfig
@@ -46,6 +54,10 @@ func main() {
 		return context.String(http.StatusOK, "OK")
 	})
 
+	// API endpoints from OAS spec
+	apiWrapper := api.Wrapper{}
+	api.RegisterHandlers(e, api.NewStrictHandler(apiWrapper, []api.StrictMiddlewareFunc{}))
+
 	// Setup asset serving:
 	// Check if we use live mode from the file system or using embedded files
 	useFS := len(os.Args) > 1 && os.Args[1] == "live"
@@ -55,8 +67,7 @@ func main() {
 	})
 	e.GET("/*", echo.WrapHandler(assetHandler))
 
-	// Start server
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1323)))
+	return e
 }
 
 func getFileSystem(useFS bool) http.FileSystem {
