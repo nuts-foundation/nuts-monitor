@@ -50,3 +50,4 @@ HEALTHCHECK --start-period=30s --timeout=5s --interval=10s \
 
 EXPOSE 1323
 ENTRYPOINT ["/usr/bin/monitor"]
+CMD ["--configfile","/app/server.config.yaml"]
