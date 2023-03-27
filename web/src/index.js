@@ -16,7 +16,7 @@ const router = createRouter({
   routes // short for `routes: routes`
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach(() => {
   // apply security
 })
 
