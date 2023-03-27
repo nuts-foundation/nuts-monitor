@@ -44,6 +44,11 @@ func main() {
 }
 
 func newEchoServer() *echo.Echo {
+	// config
+	config := loadConfig()
+	config.Print(log.Writer())
+
+	// http server
 	e := echo.New()
 	e.HideBanner = true
 	loggerConfig := middleware.DefaultLoggerConfig
