@@ -1,5 +1,8 @@
 .PHONY: test
 
+# Set the name of the Go executable
+EXECUTABLE = testnutsmonitor
+
 apis:
 	oapi-codegen --config codegen/config.yaml api/api.yaml | gofmt > api/generated.go
 
@@ -7,11 +10,11 @@ test: backend-test feature-test
 
 test-backend:
 	$(eval export TEMPDIR := $(shell mktemp -d))
-	CGO_ENABLED=0 go build -ldflags="-w -s" -o $(TEMPDIR)/monitor
-	$(TEMPDIR)/monitor & echo "$$!" > $(TEMPDIR)/PID
+	CGO_ENABLED=0 go build -ldflags="-w -s" -o $(TEMPDIR)/$(EXECUTABLE)
+	$(TEMPDIR)/$(EXECUTABLE) &
 
 cleanup-test-backend:
-	kill -9 `cat $(TEMPDIR)/PID`
+	pkill $(EXECUTABLE)
 	rm -rf $(TEMPDIR)
 
 feature-test: test-backend
