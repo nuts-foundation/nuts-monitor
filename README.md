@@ -41,6 +41,21 @@ make test
 docker run -p 1323:1323 nutsfoundation/nuts-monitor
 ```
 
+## Configuration
+The location of the config file can be set using e cmdline flag or environment variable:
+
+```shell
+./monitor --configfile=./server.config.yaml
+NUTS_CONFIGFILE=./server.config.yaml ./monitor
+```
+
+When running in Docker without a config file mounted at `/app/server.config.yaml` it will use the default configuration or you can change the command parameters.
+
+The `nutsnodeapikeyfile` config parameter should point to a PEM encoded private key file. The corresponding public key should be configured on the Nuts node in SSH authorized keys format.
+`nutsnodeapiuser` Is required when using Nuts node API token security. It must match the user in the SSH authorized keys file.
+`nutsnodeapiaudience` must match the config parameter set in the Nuts node.
+
+
 ## Technology Stack
 
 Frontend framework is vue.js
