@@ -68,7 +68,7 @@ func (c Config) Print(writer io.Writer) error {
 	}
 	var pr Config = c
 	data, _ := json.MarshalIndent(pr, "", "  ")
-	if _, err := fmt.Println(writer, string(data)); err != nil {
+	if _, err := fmt.Fprintln(writer, string(data)); err != nil {
 		return err
 	}
 	if _, err := fmt.Fprintln(writer, "========= END CONFIG ========="); err != nil {
@@ -80,7 +80,7 @@ func (c Config) Print(writer io.Writer) error {
 func loadConfig() Config {
 	flagset := loadFlagSet(os.Args[1:])
 
-	var k = koanf.New(".")
+	var k = koanf.New(defaultDelimiter)
 
 	// Prepare koanf for parsing the config file
 	configFilePath := resolveConfigFile(flagset)
