@@ -1,5 +1,8 @@
 .PHONY: test
 
+apis:
+	oapi-codegen --config codegen/config.yaml api/api.yaml | gofmt > api/generated.go
+
 test: backend-test feature-test
 
 feature-test:
