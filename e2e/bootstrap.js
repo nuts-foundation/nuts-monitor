@@ -1,6 +1,5 @@
 /* Import the puppeteer and expect functionality of chai library for configuring the Puppeteer */
 const puppeteer = require('puppeteer');
-const { spawn } = require('child_process')
 const expect = require('chai').expect;
 
 /* configurable options or object for puppeteer */
@@ -15,15 +14,9 @@ const opts = {
 before (async () => {
     global.expect = expect;
     global.browser = await puppeteer.launch(opts);
-    global.binary = spawn('go', ['run', '.', 'live'], {
-        detached: true,
-        stdio: 'ignore',
-    });
-    await new Promise(r => setTimeout(r, 5000));
 });
 
 /* call the function after puppeteer done testing */
 after ( () => {
     global.browser.close();
-    global.binary.kill();
 });
