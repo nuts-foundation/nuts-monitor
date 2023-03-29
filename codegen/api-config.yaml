@@ -1,0 +1,10 @@
+package: api
+generate:
+  echo-server: true
+  client: false
+  models: true
+  strict-server: true
+output-options:
+  exclude-schemas:
+    - CheckHealthResponse
+    - HealthCheckResult

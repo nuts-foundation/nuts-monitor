@@ -25,6 +25,8 @@ import (
 	"log"
 	"net/http"
 	"nuts-foundation/nuts-monitor/api"
+	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/config"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -45,7 +47,7 @@ func main() {
 
 func newEchoServer() *echo.Echo {
 	// config
-	config := loadConfig()
+	config := config.LoadConfig()
 	config.Print(log.Writer())
 
 	// http server
@@ -60,7 +62,12 @@ func newEchoServer() *echo.Echo {
 	})
 
 	// API endpoints from OAS spec
-	apiWrapper := api.Wrapper{}
+	apiWrapper := api.Wrapper{
+		Config: config,
+		Client: client.HTTPClient{
+			Config: config,
+		},
+	}
 	api.RegisterHandlers(e, api.NewStrictHandler(apiWrapper, []api.StrictMiddlewareFunc{}))
 
 	// Setup asset serving:

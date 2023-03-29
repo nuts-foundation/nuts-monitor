@@ -16,7 +16,7 @@
  *
  */
 
-package main
+package config
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -25,10 +25,10 @@ import (
 )
 
 func TestConfig_loadConfig(t *testing.T) {
-	os.Setenv("NUTS_CONFIGFILE", "./test/test.config.yaml")
+	os.Setenv("NUTS_CONFIGFILE", "../test/test.config.yaml")
 	defer os.Clearenv()
 
-	cfg := loadConfig()
+	cfg := LoadConfig()
 
 	assert.Equal(t, "http://example.com", cfg.NutsNodeAddress)
 }

@@ -1,0 +1,5 @@
+package: client
+generate:
+  echo-server: false
+  client: true
+  models: true

@@ -18,11 +18,45 @@
 
 package api
 
-import "context"
+import (
+	"context"
+	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/config"
+)
+
+var _ StrictServerInterface = (*Wrapper)(nil)
 
 type Wrapper struct {
+	Config config.Config
+	Client client.HTTPClient
 }
 
-func (w Wrapper) CheckHealth(_ context.Context, _ CheckHealthRequestObject) (CheckHealthResponseObject, error) {
-	return CheckHealth200JSONResponse{}, nil
+func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (CheckHealthResponseObject, error) {
+	if w.Config.NutsNodeAddress != "" {
+		_, err := w.Client.CheckHealth(ctx)
+		if err != nil {
+			var errString interface{} = err.Error()
+			return CheckHealth200JSONResponse{
+				Status: "DOWN",
+				Details: map[string]client.HealthCheckResult{
+					"node": {
+						Details: &errString,
+						Status:  "DOWN",
+					},
+				},
+			}, nil
+		}
+
+		return CheckHealth200JSONResponse{
+			Status: "UP",
+			Details: map[string]client.HealthCheckResult{
+				"node": {
+					Status: "UP",
+				},
+			},
+		}, nil
+	}
+	return CheckHealth200JSONResponse{
+		Status: "UP",
+	}, nil
 }
