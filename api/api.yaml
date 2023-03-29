@@ -6,7 +6,7 @@ info:
 paths:
   /health:
     get:
-      summary: "More elaborate health check to conform the node is (probably) functioning correctly"
+      summary: "More elaborate health check to conform the app is (probably) functioning correctly"
       description: "Returns the status in Spring Boot Health format."
       operationId: checkHealth
       tags:
