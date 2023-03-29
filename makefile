@@ -8,7 +8,7 @@ apis:
 
 test: backend-test feature-test
 
-test-backend:
+test-backend: frontend
 	$(eval export TEMPDIR := $(shell mktemp -d))
 	CGO_ENABLED=0 go build -ldflags="-w -s" -o $(TEMPDIR)/$(EXECUTABLE)
 	$(TEMPDIR)/$(EXECUTABLE) &
@@ -16,6 +16,10 @@ test-backend:
 cleanup-test-backend:
 	pkill $(EXECUTABLE)
 	rm -rf $(TEMPDIR)
+
+frontend:
+	NODE_ENV=test npm install
+	NODE_ENV=test npm run build
 
 feature-test: test-backend
 	NODE_ENV=test npm install
