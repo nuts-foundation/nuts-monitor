@@ -50,9 +50,11 @@ func (hb HTTPClient) CheckHealth(ctx context.Context, reqEditors ...RequestEdito
 	if err != nil {
 		return nil, err
 	}
-	if result.JSON200 == nil { // non-json response
-		return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
+	if result.JSON503 != nil {
+		return result.JSON503, nil
 	}
-
-	return result.JSON200, nil
+	if result.JSON200 != nil {
+		return result.JSON200, nil
+	}
+	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
 }

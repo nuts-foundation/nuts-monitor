@@ -24,6 +24,7 @@ import (
 	"net"
 	"net/http"
 	"nuts-foundation/nuts-monitor/test"
+	"os"
 	"testing"
 	"time"
 
@@ -32,7 +33,11 @@ import (
 )
 
 // TestStatusCodes tests if the returned errors from the API implementations are correctly translated to status codes
-func TestStatusCodes(t *testing.T) {
+func TestStatusAndHealth(t *testing.T) {
+	ts := test.BasicTestNode(t)
+	os.Setenv("NUTS_NUTSNODEADDR", ts.URL)
+	defer os.Clearenv()
+
 	httpPort := startServer(t)
 
 	baseUrl := fmt.Sprintf("http://localhost:%d", httpPort)

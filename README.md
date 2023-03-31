@@ -54,7 +54,11 @@ When running in Docker without a config file mounted at `/app/server.config.yaml
 The `nutsnodeapikeyfile` config parameter should point to a PEM encoded private key file. The corresponding public key should be configured on the Nuts node in SSH authorized keys format.
 `nutsnodeapiuser` Is required when using Nuts node API token security. It must match the user in the SSH authorized keys file.
 `nutsnodeapiaudience` must match the config parameter set in the Nuts node.
+Check https://nuts-node.readthedocs.io for Nuts node API security details.
 
+## Health check
+
+The monitor exposes a status and health check endpoints on `/status` and `/health`. The health endpoint returns a sprint actuator style body.
 
 ## Technology Stack
 

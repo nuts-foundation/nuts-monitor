@@ -21,25 +21,13 @@ package client
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
 	"nuts-foundation/nuts-monitor/config"
+	"nuts-foundation/nuts-monitor/test"
 	"testing"
 )
 
 func TestClient_CheckHealth(t *testing.T) {
-	// Create a new test HTTP server that returns a 200 status code and
-	// the Spring Boot Actuator return body when the /health endpoint is requested.
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status": "UP"}`))
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer ts.Close()
+	ts := test.BasicTestNode(t)
 
 	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL}}
 	resp, err := client.CheckHealth(context.Background())

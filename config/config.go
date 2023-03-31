@@ -127,7 +127,7 @@ func LoadConfig() Config {
 
 func loadFlagSet(args []string) *pflag.FlagSet {
 	f := pflag.NewFlagSet("config", pflag.ContinueOnError)
-	f.String(configFileFlag, defaultConfigFile, "Nuts config file")
+	f.String(configFileFlag, defaultConfigFile, "Nuts monitor config file")
 	f.Usage = func() {
 		fmt.Println(f.FlagUsages())
 		os.Exit(0)

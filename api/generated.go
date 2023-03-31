@@ -81,6 +81,15 @@ func (response CheckHealth200JSONResponse) VisitCheckHealthResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CheckHealth503JSONResponse CheckHealthResponse
+
+func (response CheckHealth503JSONResponse) VisitCheckHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// More elaborate health check to conform the app is (probably) functioning correctly

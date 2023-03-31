@@ -22,6 +22,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Health"
+        503:
+          description: "Returned when the status is DOWN"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
 components:
   schemas:
     Health:
