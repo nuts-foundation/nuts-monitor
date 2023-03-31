@@ -46,31 +46,40 @@ func (w Wrapper) Diagnostics(ctx context.Context, _ DiagnosticsRequestObject) (D
 }
 
 func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (CheckHealthResponseObject, error) {
+	upResponse := CheckHealth200JSONResponse{
+		Status: UP,
+	}
+	downResponse := CheckHealth503JSONResponse{
+		Status: DOWN,
+	}
+
 	if w.Config.NutsNodeAddr != "" {
-		_, err := w.Client.CheckHealth(ctx)
+		h, err := w.Client.CheckHealth(ctx)
 		if err != nil {
 			var errString interface{} = err.Error()
-			return CheckHealth200JSONResponse{
-				Status: "DOWN",
-				Details: map[string]client.HealthCheckResult{
-					"node": {
-						Details: &errString,
-						Status:  "DOWN",
-					},
+			downResponse.Details = map[string]client.HealthCheckResult{
+				"node": {
+					Details: &errString,
+					Status:  "UNKNOWN",
 				},
-			}, nil
+			}
+			return downResponse, nil
+		}
+		if h.Status != UP {
+			downResponse.Details = map[string]client.HealthCheckResult{
+				"node": {
+					Status: h.Status,
+				},
+			}
+			return downResponse, nil
 		}
 
-		return CheckHealth200JSONResponse{
-			Status: "UP",
-			Details: map[string]client.HealthCheckResult{
-				"node": {
-					Status: "UP",
-				},
+		upResponse.Details = map[string]client.HealthCheckResult{
+			"node": {
+				Status: h.Status,
 			},
-		}, nil
+		}
+
 	}
-	return CheckHealth200JSONResponse{
-		Status: "UP",
-	}, nil
+	return upResponse, nil
 }
