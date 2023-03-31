@@ -20,6 +20,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"nuts-foundation/nuts-monitor/config"
 )
@@ -49,5 +50,9 @@ func (hb HTTPClient) CheckHealth(ctx context.Context, reqEditors ...RequestEdito
 	if err != nil {
 		return nil, err
 	}
+	if result.JSON200 == nil { // non-json response
+		return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
+	}
+
 	return result.JSON200, nil
 }
