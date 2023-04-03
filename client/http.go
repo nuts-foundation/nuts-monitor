@@ -36,9 +36,6 @@ func CreateHTTPClient(cfg config.Config) (HTTPRequestDoer, error) {
 	var result *httpRequestDoerAdapter
 	client := &http.Client{}
 	client.Timeout = 10 * time.Second
-	result = &httpRequestDoerAdapter{
-		fn: client.Do,
-	}
 
 	generator := func() (string, error) {
 		return "", nil
@@ -48,7 +45,6 @@ func CreateHTTPClient(cfg config.Config) (HTTPRequestDoer, error) {
 		generator = createTokenGenerator(cfg)
 	}
 
-	fn := result.fn
 	result = &httpRequestDoerAdapter{fn: func(req *http.Request) (*http.Response, error) {
 		token, err := generator()
 		if err != nil {
@@ -57,7 +53,7 @@ func CreateHTTPClient(cfg config.Config) (HTTPRequestDoer, error) {
 		if len(token) > 0 {
 			req.Header.Set("Authorization", "Bearer "+token)
 		}
-		return fn(req)
+		return client.Do(req)
 	}}
 
 	return result, nil
