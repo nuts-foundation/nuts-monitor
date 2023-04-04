@@ -45,9 +45,9 @@ RUN apk update \
   && update-ca-certificates
 COPY --from=builder /opt/nuts/monitor /usr/bin/monitor
 
-HEALTHCHECK --start-period=30s --timeout=5s --interval=10s \
-    CMD curl -f http://localhost:1323/health || exit 1
+HEALTHCHECK --start-period=5s --timeout=5s --interval=10s \
+    CMD curl -f http://localhost:1313/health || exit 1
 
-EXPOSE 1323
+EXPOSE 1313
 ENTRYPOINT ["/usr/bin/monitor"]
 CMD ["--configfile","/app/server.config.yaml"]

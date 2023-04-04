@@ -42,7 +42,7 @@ func main() {
 	e := newEchoServer()
 
 	// Start server
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1323)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1313)))
 }
 
 func newEchoServer() *echo.Echo {

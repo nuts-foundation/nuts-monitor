@@ -4,7 +4,7 @@ describe('Landing page loading', async  () => {
     before(async () => { /* before hook for mocha testing */
         page = await browser.newPage();
         const [response] = await Promise.all([
-            page.goto("http://localhost:1323", {timeout:0}),
+            page.goto("http://localhost:1313", {timeout:0}),
             page.waitForNavigation({timeout:0}),
         ]);
     });

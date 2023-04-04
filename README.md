@@ -38,7 +38,7 @@ make test
 
 ### Docker
 ```shell
-docker run -p 1323:1323 nutsfoundation/nuts-monitor
+docker run -p 1313:1313 nutsfoundation/nuts-monitor
 ```
 
 ## Configuration
