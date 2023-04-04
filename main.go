@@ -83,7 +83,7 @@ func newEchoServer() *echo.Echo {
 func getFileSystem(useFS bool) http.FileSystem {
 	if useFS {
 		log.Print("using live mode")
-		return http.FS(os.DirFS(assetPath))
+		return http.FS(os.DirFS(path.Join(assetPath, "dist")))
 	}
 
 	log.Print("using embed mode")
