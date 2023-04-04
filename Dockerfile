@@ -6,7 +6,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY ./web/src ./web/src
-RUN mkdir ./web/dist
 COPY ./*.config.js .
 RUN npm run dist
 

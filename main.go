@@ -28,14 +28,15 @@ import (
 	"nuts-foundation/nuts-monitor/client"
 	"nuts-foundation/nuts-monitor/config"
 	"os"
+	"path"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-const assetPath = "web/dist"
+const assetPath = "web"
 
-//go:embed web/dist/*
+//go:embed web/*
 var embeddedFiles embed.FS
 
 func main() {
@@ -86,7 +87,7 @@ func getFileSystem(useFS bool) http.FileSystem {
 	}
 
 	log.Print("using embed mode")
-	fsys, err := fs.Sub(embeddedFiles, assetPath)
+	fsys, err := fs.Sub(embeddedFiles, path.Join(assetPath, "dist"))
 	if err != nil {
 		panic(err)
 	}
