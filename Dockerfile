@@ -4,16 +4,15 @@
 FROM node:lts-alpine as frontend-builder
 WORKDIR /app
 COPY package*.json ./
-ENV NODE_ENV production
 RUN npm install
-COPY ./web ./web
+COPY ./web/src ./web/src
 COPY ./*.config.js .
 RUN npm run dist
 
 #
 # Build backend
 #
-FROM golang:1.20.2-alpine as builder
+FROM golang:1.20.2-alpine as backend-builder
 
 ARG TARGETARCH
 ARG TARGETOS
@@ -26,28 +25,32 @@ RUN apk update \
 ENV GO111MODULE on
 ENV GOPATH /
 
-RUN mkdir /opt/nuts && cd /opt/nuts
+RUN mkdir /app && cd /app
+WORKDIR /app
 COPY go.mod .
 COPY go.sum .
 RUN go mod download && go mod verify
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o /opt/nuts/monitor
+COPY --from=frontend-builder /app/web/dist /app/web/dist
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o /app/nuts-monitor
 
 #
 # Runtime
 #
-FROM alpine:3.17.3
+FROM alpine:3.17
 RUN apk update \
   && apk add --no-cache \
              tzdata \
              curl \
   && update-ca-certificates
-COPY --from=builder /opt/nuts/monitor /usr/bin/monitor
+RUN mkdir /app && cd /app
+WORKDIR /app
+COPY --from=backend-builder /app/nuts-monitor .
 
 HEALTHCHECK --start-period=5s --timeout=5s --interval=10s \
     CMD curl -f http://localhost:1313/health || exit 1
 
 EXPOSE 1313
-ENTRYPOINT ["/usr/bin/monitor"]
+ENTRYPOINT ["/app/nuts-monitor"]
 CMD ["--configfile","/app/server.config.yaml"]
