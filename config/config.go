@@ -15,7 +15,7 @@
 *
  */
 
-package main
+package config
 
 import (
 	"crypto"
@@ -59,7 +59,7 @@ type Config struct {
 	NutsNodeAPIUser string `koanf:"nutsnodeapiuser"`
 	// NutsNodeAPIAudience dictates the aud field of the created JWT
 	NutsNodeAPIAudience string `kaonf:"nutsnodeapiaudience"`
-	apiKey              crypto.Signer
+	ApiKey              crypto.Signer
 }
 
 func (c Config) Print(writer io.Writer) error {
@@ -77,7 +77,7 @@ func (c Config) Print(writer io.Writer) error {
 	return nil
 }
 
-func loadConfig() Config {
+func LoadConfig() Config {
 	flagset := loadFlagSet(os.Args[1:])
 
 	var k = koanf.New(defaultDelimiter)
@@ -110,7 +110,7 @@ func loadConfig() Config {
 		if err != nil {
 			log.Fatalf("error while reading private key file: %v", err)
 		}
-		config.apiKey, err = pemToPrivateKey(bytes)
+		config.ApiKey, err = pemToPrivateKey(bytes)
 		if err != nil {
 			log.Fatalf("error while decoding private key file: %v", err)
 		}
@@ -127,7 +127,7 @@ func loadConfig() Config {
 
 func loadFlagSet(args []string) *pflag.FlagSet {
 	f := pflag.NewFlagSet("config", pflag.ContinueOnError)
-	f.String(configFileFlag, defaultConfigFile, "Nuts config file")
+	f.String(configFileFlag, defaultConfigFile, "Nuts monitor config file")
 	f.Usage = func() {
 		fmt.Println(f.FlagUsages())
 		os.Exit(0)

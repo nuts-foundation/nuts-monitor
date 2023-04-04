@@ -1,6 +1,0 @@
-package: api
-generate:
-  echo-server: true
-  client: false
-  models: true
-  strict-server: true

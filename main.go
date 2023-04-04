@@ -25,6 +25,8 @@ import (
 	"log"
 	"net/http"
 	"nuts-foundation/nuts-monitor/api"
+	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/config"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -40,12 +42,12 @@ func main() {
 	e := newEchoServer()
 
 	// Start server
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1323)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1313)))
 }
 
 func newEchoServer() *echo.Echo {
 	// config
-	config := loadConfig()
+	config := config.LoadConfig()
 	config.Print(log.Writer())
 
 	// http server
@@ -60,16 +62,18 @@ func newEchoServer() *echo.Echo {
 	})
 
 	// API endpoints from OAS spec
-	apiWrapper := api.Wrapper{}
+	apiWrapper := api.Wrapper{
+		Config: config,
+		Client: client.HTTPClient{
+			Config: config,
+		},
+	}
 	api.RegisterHandlers(e, api.NewStrictHandler(apiWrapper, []api.StrictMiddlewareFunc{}))
 
 	// Setup asset serving:
 	// Check if we use live mode from the file system or using embedded files
 	useFS := len(os.Args) > 1 && os.Args[1] == "live"
 	assetHandler := http.FileServer(getFileSystem(useFS))
-	e.GET("/status", func(context echo.Context) error {
-		return context.String(http.StatusOK, "OK")
-	})
 	e.GET("/*", echo.WrapHandler(assetHandler))
 
 	return e

@@ -39,11 +39,18 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o
 # Runtime
 #
 FROM alpine:3.17
+RUN apk update \
+  && apk add --no-cache \
+             tzdata \
+             curl \
+  && update-ca-certificates
 RUN mkdir /app && cd /app
 WORKDIR /app
 COPY --from=backend-builder /app/nuts-monitor .
-HEALTHCHECK --start-period=5s --timeout=5s --interval=5s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:1323/status || exit 1
-EXPOSE 1323
+
+HEALTHCHECK --start-period=5s --timeout=5s --interval=10s \
+    CMD curl -f http://localhost:1313/health || exit 1
+
+EXPOSE 1313
 ENTRYPOINT ["/app/nuts-monitor"]
 CMD ["--configfile","/app/server.config.yaml"]

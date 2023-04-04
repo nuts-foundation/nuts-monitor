@@ -12,27 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// CheckHealthResponse defines model for CheckHealthResponse.
-type CheckHealthResponse struct {
-	// Details Map of the performed health checks and their results.
-	Details map[string]HealthCheckResult `json:"details"`
-
-	// Status Overall status derived from performed health checks. Values are "UP", "DOWN" and "UNKNOWN".
-	Status string `json:"status"`
-}
-
-// HealthCheckResult defines model for HealthCheckResult.
-type HealthCheckResult struct {
-	// Details Details of the health check result.
-	Details *interface{} `json:"details,omitempty"`
-
-	// Status Status of the health check. Values are "UP", "DOWN" and "UNKNOWN".
-	Status string `json:"status"`
-}
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// More elaborate health check to conform the node is (probably) functioning correctly
+	// More elaborate health check to conform the app is (probably) functioning correctly
 	// (GET /health)
 	CheckHealth(ctx echo.Context) error
 }
@@ -99,9 +81,18 @@ func (response CheckHealth200JSONResponse) VisitCheckHealthResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CheckHealth503JSONResponse CheckHealthResponse
+
+func (response CheckHealth503JSONResponse) VisitCheckHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// More elaborate health check to conform the node is (probably) functioning correctly
+	// More elaborate health check to conform the app is (probably) functioning correctly
 	// (GET /health)
 	CheckHealth(ctx context.Context, request CheckHealthRequestObject) (CheckHealthResponseObject, error)
 }
