@@ -20,7 +20,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"nuts-foundation/nuts-monitor/config"
 	"nuts-foundation/nuts-monitor/test"
 	"testing"
@@ -29,11 +31,34 @@ import (
 func TestClient_CheckHealth(t *testing.T) {
 	ts := test.BasicTestNode(t)
 
-	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL}}
+	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL()}}
 	resp, err := client.CheckHealth(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to get correct response: %v", err)
 	}
 
 	assert.Equal(t, "UP", resp.Status)
+}
+
+func TestClient_Diagnostics(t *testing.T) {
+	ts := test.BasicTestNode(t)
+	d := Diagnostics{
+		Status: Status{
+			SoftwareVersion: "v1.0.0",
+		},
+	}
+	dBytes, _ := json.Marshal(d)
+	ts.HandleFunc("/status/diagnostics", func(w http.ResponseWriter, request *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(dBytes)
+	})
+
+	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL()}}
+	resp, err := client.Diagnostics(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to get correct response: %v", err)
+	}
+
+	assert.Equal(t, "v1.0.0", resp.Status.SoftwareVersion)
 }

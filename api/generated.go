@@ -12,11 +12,95 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Network network and connection diagnostics
+type Network struct {
+	Connections struct {
+		// ConnectedPeersCount number of peers connected
+		ConnectedPeersCount int `json:"connected_peers_count"`
+
+		// PeerId identifier generated at startup of the node
+		PeerId string `json:"peer_id"`
+	} `json:"connections"`
+
+	// NodeDid DID connected to the node.
+	NodeDid *string `json:"node_did,omitempty"`
+
+	// State Key numbers of the DAG
+	State struct {
+		// DagLcHigh highest LC value
+		DagLcHigh int `json:"dag_lc_high"`
+
+		// DagXor XOR value of all transaction refs
+		DagXor string `json:"dag_xor"`
+
+		// FailedEvents number of failed internal events
+		FailedEvents int `json:"failed_events"`
+
+		// StoredDatabaseSizeBytes size of the DB in bytes
+		StoredDatabaseSizeBytes float32 `json:"stored_database_size_bytes"`
+
+		// TransactionCount number of transactions on the network
+		TransactionCount float32 `json:"transaction_count"`
+	} `json:"state"`
+}
+
+// Status characteristics of running process
+type Status struct {
+	// GitCommit hash of latest commit in github used to build the current binary
+	GitCommit string `json:"git_commit"`
+
+	// OsArch System architecture (arm,amd64, etc)
+	OsArch string `json:"os_arch"`
+
+	// SoftwareVersion Github tag or branch
+	SoftwareVersion string `json:"software_version"`
+
+	// Uptime Nanoseconds of uptime
+	Uptime float32 `json:"uptime"`
+}
+
+// VCR key numbers on credentials
+type VCR struct {
+	// CredentialCount total number of observed credentials
+	CredentialCount int `json:"credential_count"`
+
+	// Issuer numbers on issued credentials
+	Issuer struct {
+		// IssuedCredentialsCount number of issued credentials from this node
+		IssuedCredentialsCount int `json:"issued_credentials_count"`
+
+		// RevokedCredentialsCount number of revoked credentials from this node
+		RevokedCredentialsCount int `json:"revoked_credentials_count"`
+	} `json:"issuer"`
+	Verifier struct {
+		// RevocationsCount total number of revocations in the network
+		RevocationsCount int `json:"revocations_count"`
+	} `json:"verifier"`
+}
+
+// VDR key numbers on DID Documents
+type VDR struct {
+	// ConflictedDidDocuments numbers on conflicted DID documents
+	ConflictedDidDocuments struct {
+		// OwnedCount number of conflicted documents that are under this node's control
+		OwnedCount int `json:"owned_count"`
+
+		// TotalCount total number of conflicted documents
+		TotalCount int `json:"total_count"`
+	} `json:"conflicted_did_documents"`
+
+	// DidDocumentsCount total number of DID Documents
+	DidDocumentsCount int `json:"did_documents_count"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// More elaborate health check to conform the app is (probably) functioning correctly
 	// (GET /health)
 	CheckHealth(ctx echo.Context) error
+	// Returns the node key diagnostics
+	// (GET /web/diagnostics)
+	Diagnostics(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -30,6 +114,15 @@ func (w *ServerInterfaceWrapper) CheckHealth(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.CheckHealth(ctx)
+	return err
+}
+
+// Diagnostics converts echo context to params.
+func (w *ServerInterfaceWrapper) Diagnostics(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Diagnostics(ctx)
 	return err
 }
 
@@ -62,6 +155,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/health", wrapper.CheckHealth)
+	router.GET(baseURL+"/web/diagnostics", wrapper.Diagnostics)
 
 }
 
@@ -90,11 +184,30 @@ func (response CheckHealth503JSONResponse) VisitCheckHealthResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DiagnosticsRequestObject struct {
+}
+
+type DiagnosticsResponseObject interface {
+	VisitDiagnosticsResponse(w http.ResponseWriter) error
+}
+
+type Diagnostics200JSONResponse Diagnostics
+
+func (response Diagnostics200JSONResponse) VisitDiagnosticsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// More elaborate health check to conform the app is (probably) functioning correctly
 	// (GET /health)
 	CheckHealth(ctx context.Context, request CheckHealthRequestObject) (CheckHealthResponseObject, error)
+	// Returns the node key diagnostics
+	// (GET /web/diagnostics)
+	Diagnostics(ctx context.Context, request DiagnosticsRequestObject) (DiagnosticsResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx echo.Context, args interface{}) (interface{}, error)
@@ -127,6 +240,29 @@ func (sh *strictHandler) CheckHealth(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(CheckHealthResponseObject); ok {
 		return validResponse.VisitCheckHealthResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// Diagnostics operation middleware
+func (sh *strictHandler) Diagnostics(ctx echo.Context) error {
+	var request DiagnosticsRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.Diagnostics(ctx.Request().Context(), request.(DiagnosticsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Diagnostics")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DiagnosticsResponseObject); ok {
+		return validResponse.VisitDiagnosticsResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("Unexpected response type: %T", response)
 	}

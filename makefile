@@ -7,7 +7,7 @@ apis:
 	oapi-codegen --config codegen/api-config.yaml api/api.yaml | gofmt > api/generated.go
 
 apiclient:
-	oapi-codegen --config codegen/client-config.yaml client/health.yaml | gofmt > client/generated.go
+	oapi-codegen --config codegen/client-config.yaml client/node.yaml | gofmt > client/generated.go
 
 test: backend-test feature-test
 

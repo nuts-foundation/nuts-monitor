@@ -8,3 +8,4 @@ output-options:
   exclude-schemas:
     - CheckHealthResponse
     - HealthCheckResult
+    - Diagnostics

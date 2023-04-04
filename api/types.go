@@ -21,3 +21,5 @@ package api
 import "nuts-foundation/nuts-monitor/client"
 
 type CheckHealthResponse = client.Health
+
+type Diagnostics = client.Diagnostics

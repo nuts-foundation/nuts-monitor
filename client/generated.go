@@ -13,6 +13,21 @@ import (
 	"strings"
 )
 
+// Diagnostics defines model for Diagnostics.
+type Diagnostics struct {
+	// Network network and connection diagnostics
+	Network Network `json:"network"`
+
+	// Status characteristics of running process
+	Status Status `json:"status"`
+
+	// Vcr key numbers on credentials
+	Vcr VCR `json:"vcr"`
+
+	// Vdr key numbers on DID Documents
+	Vdr VDR `json:"vdr"`
+}
+
 // Health defines model for Health.
 type Health struct {
 	// Details Map of the performed health checks and their results.
@@ -29,6 +44,87 @@ type HealthCheckResult struct {
 
 	// Status Status of the health check. Values are "UP", "DOWN" and "UNKNOWN".
 	Status string `json:"status"`
+}
+
+// Network network and connection diagnostics
+type Network struct {
+	Connections struct {
+		// ConnectedPeersCount number of peers connected
+		ConnectedPeersCount int `json:"connected_peers_count"`
+
+		// PeerId identifier generated at startup of the node
+		PeerId string `json:"peer_id"`
+	} `json:"connections"`
+
+	// NodeDid DID connected to the node.
+	NodeDid *string `json:"node_did,omitempty"`
+
+	// State Key numbers of the DAG
+	State struct {
+		// DagLcHigh highest LC value
+		DagLcHigh int `json:"dag_lc_high"`
+
+		// DagXor XOR value of all transaction refs
+		DagXor string `json:"dag_xor"`
+
+		// FailedEvents number of failed internal events
+		FailedEvents int `json:"failed_events"`
+
+		// StoredDatabaseSizeBytes size of the DB in bytes
+		StoredDatabaseSizeBytes float32 `json:"stored_database_size_bytes"`
+
+		// TransactionCount number of transactions on the network
+		TransactionCount float32 `json:"transaction_count"`
+	} `json:"state"`
+}
+
+// Status characteristics of running process
+type Status struct {
+	// GitCommit hash of latest commit in github used to build the current binary
+	GitCommit string `json:"git_commit"`
+
+	// OsArch System architecture (arm,amd64, etc)
+	OsArch string `json:"os_arch"`
+
+	// SoftwareVersion Github tag or branch
+	SoftwareVersion string `json:"software_version"`
+
+	// Uptime Nanoseconds of uptime
+	Uptime float32 `json:"uptime"`
+}
+
+// VCR key numbers on credentials
+type VCR struct {
+	// CredentialCount total number of observed credentials
+	CredentialCount int `json:"credential_count"`
+
+	// Issuer numbers on issued credentials
+	Issuer struct {
+		// IssuedCredentialsCount number of issued credentials from this node
+		IssuedCredentialsCount int `json:"issued_credentials_count"`
+
+		// RevokedCredentialsCount number of revoked credentials from this node
+		RevokedCredentialsCount int `json:"revoked_credentials_count"`
+	} `json:"issuer"`
+	Verifier struct {
+		// RevocationsCount total number of revocations in the network
+		RevocationsCount int `json:"revocations_count"`
+	} `json:"verifier"`
+}
+
+// VDR key numbers on DID Documents
+type VDR struct {
+	// ConflictedDidDocuments numbers on conflicted DID documents
+	ConflictedDidDocuments struct {
+		// OwnedCount number of conflicted documents that are under this node's control
+		OwnedCount int `json:"owned_count"`
+
+		// TotalCount total number of conflicted documents
+		TotalCount int `json:"total_count"`
+	} `json:"conflicted_did_documents"`
+
+	// DidDocumentsCount total number of DID Documents
+	DidDocumentsCount int `json:"did_documents_count"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -106,10 +202,25 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// CheckHealth request
 	CheckHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// Diagnostics request
+	Diagnostics(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) CheckHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCheckHealthRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Diagnostics(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDiagnosticsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +241,33 @@ func NewCheckHealthRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/health")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDiagnosticsRequest generates requests for Diagnostics
+func NewDiagnosticsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/status/diagnostics")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -192,6 +330,9 @@ func WithBaseURL(baseURL string) ClientOption {
 type ClientWithResponsesInterface interface {
 	// CheckHealth request
 	CheckHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckHealthResponse, error)
+
+	// Diagnostics request
+	DiagnosticsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DiagnosticsResponse, error)
 }
 
 type CheckHealthResponse struct {
@@ -217,6 +358,28 @@ func (r CheckHealthResponse) StatusCode() int {
 	return 0
 }
 
+type DiagnosticsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Diagnostics
+}
+
+// Status returns HTTPResponse.Status
+func (r DiagnosticsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DiagnosticsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // CheckHealthWithResponse request returning *CheckHealthResponse
 func (c *ClientWithResponses) CheckHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckHealthResponse, error) {
 	rsp, err := c.CheckHealth(ctx, reqEditors...)
@@ -224,6 +387,15 @@ func (c *ClientWithResponses) CheckHealthWithResponse(ctx context.Context, reqEd
 		return nil, err
 	}
 	return ParseCheckHealthResponse(rsp)
+}
+
+// DiagnosticsWithResponse request returning *DiagnosticsResponse
+func (c *ClientWithResponses) DiagnosticsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DiagnosticsResponse, error) {
+	rsp, err := c.Diagnostics(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDiagnosticsResponse(rsp)
 }
 
 // ParseCheckHealthResponse parses an HTTP response from a CheckHealthWithResponse call
@@ -253,6 +425,32 @@ func ParseCheckHealthResponse(rsp *http.Response) (*CheckHealthResponse, error) 
 			return nil, err
 		}
 		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDiagnosticsResponse parses an HTTP response from a DiagnosticsWithResponse call
+func ParseDiagnosticsResponse(rsp *http.Response) (*DiagnosticsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DiagnosticsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Diagnostics
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
