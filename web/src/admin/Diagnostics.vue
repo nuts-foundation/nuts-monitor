@@ -43,7 +43,7 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
         <div class="bg-white shadow rounded-lg p-4">
           <div class="font-semibold text-gray-700 mb-2">DID Document count</div>
-          <div class="text-2xl font-bold text-gray-900">{{diagnostics.vdr.did_documents_count}}</div>
+          <div id="documents_count" class="text-2xl font-bold text-gray-900">{{diagnostics.vdr.did_documents_count}}</div>
         </div>
         <div class="bg-white shadow rounded-lg p-4">
           <div class="font-semibold text-gray-700 mb-2">Conflicted own</div>

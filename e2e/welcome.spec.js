@@ -1,4 +1,4 @@
-describe('Landing page loading', async  () => {
+describe('Main page loading', async  () => {
     let page;
 
     before(async () => { /* before hook for mocha testing */
@@ -15,5 +15,11 @@ describe('Landing page loading', async  () => {
 
     it('should display title', async () => {
         expect(await page.title()).to.eql('Nuts monitor');
+    });
+    it('should display diagnostics', async () => {
+        // Get the div element and check its contents
+        const documentsCountDiv = await page.$('#documents_count');
+        const textContent = await documentsCountDiv.evaluate(node => node.textContent);
+        expect(textContent).to.equal('0');
     });
 });
