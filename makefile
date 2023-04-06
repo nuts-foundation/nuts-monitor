@@ -7,7 +7,8 @@ apis:
 	oapi-codegen --config codegen/api-config.yaml api/api.yaml | gofmt > api/generated.go
 
 apiclient:
-	oapi-codegen --config codegen/client-config.yaml client/node.yaml | gofmt > client/generated.go
+	oapi-codegen --config codegen/diagnostics-config.yaml client/diagnostics/node.yaml | gofmt > client/diagnostics/generated.go
+	oapi-codegen --config codegen/network-config.yaml https://raw.githubusercontent.com/nuts-foundation/nuts-node/master/docs/_static/network/v1.yaml | gofmt > client/network/generated.go
 
 test: backend-test feature-test
 

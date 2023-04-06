@@ -33,6 +33,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Diagnostics"
+  /web/network_topology:
+    get:
+      summary: "Returns the network as a graph model"
+      operationId: networkTopology
+      responses:
+        200:
+          description: "Network topology data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkTopology"
 components:
   schemas:
     CheckHealthResponse:
@@ -186,23 +197,27 @@ components:
         did_documents_count:
           type: integer
           description: "total number of DID Documents"
-#    Graph:
-#      required:
-#        - vertices
-#        - edges
-#      properties:
-#        vertices:
-#          type: array
-#          description: "array of PeerIDs"
-#          items:
-#            type: string
-#        edges:
-#          type: array
-#          description: "array of tuples. PeerID -> PeerID"
-#          items:
-#            type: array
-#            items:
-#              type: string
+    NetworkTopology:
+      required:
+        - vertices
+        - edges
+        - peerID
+      properties:
+        peerID:
+          type: string
+          description: "own nodes network ID"
+        vertices:
+          type: array
+          description: "array of PeerIDs"
+          items:
+            type: string
+        edges:
+          description: "list of tuples (PeerID -> PeerID)"
+          type: array
+          items:
+            type: array
+            items:
+              type: string
     HealthCheckResult:
       required:
         - status

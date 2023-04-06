@@ -101,6 +101,9 @@ type ServerInterface interface {
 	// Returns the node key diagnostics
 	// (GET /web/diagnostics)
 	Diagnostics(ctx echo.Context) error
+	// Returns the network as a graph model
+	// (GET /web/network_topology)
+	NetworkTopology(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -123,6 +126,15 @@ func (w *ServerInterfaceWrapper) Diagnostics(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Diagnostics(ctx)
+	return err
+}
+
+// NetworkTopology converts echo context to params.
+func (w *ServerInterfaceWrapper) NetworkTopology(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.NetworkTopology(ctx)
 	return err
 }
 
@@ -156,6 +168,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/health", wrapper.CheckHealth)
 	router.GET(baseURL+"/web/diagnostics", wrapper.Diagnostics)
+	router.GET(baseURL+"/web/network_topology", wrapper.NetworkTopology)
 
 }
 
@@ -200,6 +213,22 @@ func (response Diagnostics200JSONResponse) VisitDiagnosticsResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type NetworkTopologyRequestObject struct {
+}
+
+type NetworkTopologyResponseObject interface {
+	VisitNetworkTopologyResponse(w http.ResponseWriter) error
+}
+
+type NetworkTopology200JSONResponse NetworkTopology
+
+func (response NetworkTopology200JSONResponse) VisitNetworkTopologyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// More elaborate health check to conform the app is (probably) functioning correctly
@@ -208,6 +237,9 @@ type StrictServerInterface interface {
 	// Returns the node key diagnostics
 	// (GET /web/diagnostics)
 	Diagnostics(ctx context.Context, request DiagnosticsRequestObject) (DiagnosticsResponseObject, error)
+	// Returns the network as a graph model
+	// (GET /web/network_topology)
+	NetworkTopology(ctx context.Context, request NetworkTopologyRequestObject) (NetworkTopologyResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx echo.Context, args interface{}) (interface{}, error)
@@ -263,6 +295,29 @@ func (sh *strictHandler) Diagnostics(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(DiagnosticsResponseObject); ok {
 		return validResponse.VisitDiagnosticsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// NetworkTopology operation middleware
+func (sh *strictHandler) NetworkTopology(ctx echo.Context) error {
+	var request NetworkTopologyRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.NetworkTopology(ctx.Request().Context(), request.(NetworkTopologyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "NetworkTopology")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(NetworkTopologyResponseObject); ok {
+		return validResponse.VisitNetworkTopologyResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("Unexpected response type: %T", response)
 	}

@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"net/http"
+	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/config"
 	"nuts-foundation/nuts-monitor/test"
 	"testing"
@@ -42,8 +43,8 @@ func TestClient_CheckHealth(t *testing.T) {
 
 func TestClient_Diagnostics(t *testing.T) {
 	ts := test.BasicTestNode(t)
-	d := Diagnostics{
-		Status: Status{
+	d := diagnostics.Diagnostics{
+		Status: diagnostics.Status{
 			SoftwareVersion: "v1.0.0",
 		},
 	}
