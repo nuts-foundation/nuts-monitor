@@ -58,3 +58,28 @@ func (hb HTTPClient) CheckHealth(ctx context.Context, reqEditors ...RequestEdito
 	}
 	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
 }
+
+func (hb HTTPClient) Diagnostics(ctx context.Context) (*Diagnostics, error) {
+	reqEditors := []RequestEditorFn{
+		func(ctx context.Context, req *http.Request) error {
+			req.Header.Add("Accept", "application/json")
+			return nil
+		},
+	}
+
+	response, err := hb.client().Diagnostics(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	if err := TestResponseCode(http.StatusOK, response); err != nil {
+		return nil, err
+	}
+	result, err := ParseDiagnosticsResponse(response)
+	if err != nil {
+		return nil, err
+	}
+	if result.JSON200 != nil {
+		return result.JSON200, nil
+	}
+	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
+}

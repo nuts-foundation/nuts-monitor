@@ -36,6 +36,15 @@ type Wrapper struct {
 	Client client.HTTPClient
 }
 
+func (w Wrapper) Diagnostics(ctx context.Context, _ DiagnosticsRequestObject) (DiagnosticsResponseObject, error) {
+	diagnostics, err := w.Client.Diagnostics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return Diagnostics200JSONResponse(*diagnostics), nil
+}
+
 func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (CheckHealthResponseObject, error) {
 	upResponse := CheckHealth200JSONResponse{
 		Status: UP,

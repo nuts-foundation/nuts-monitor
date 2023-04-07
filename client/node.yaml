@@ -1,12 +1,16 @@
-openapi: 3.0.0
+openapi: "3.0.3"
 info:
-  title: Nuts Registry Admin API
+  title: Nuts Node Monitoring API spec (copy)
+  description: Copy of the Nuts node API specification. v5.1.0 - next
   version: 1.0.0
-
+  license:
+    name: GPLv3
+servers:
+  - url: http://localhost:1323
 paths:
   /health:
     get:
-      summary: "More elaborate health check to conform the app is (probably) functioning correctly"
+      summary: "More elaborate health check to conform the node is (probably) functioning correctly"
       description: "Returns the status in Spring Boot Health format."
       operationId: checkHealth
       responses:
@@ -15,39 +19,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CheckHealthResponse"
+                $ref: "#/components/schemas/Health"
         503:
           description: "Returned when the status is DOWN"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CheckHealthResponse"
-  /web/diagnostics:
+                $ref: "#/components/schemas/Health"
+  /status/diagnostics:
     get:
-      summary: "Returns the node key diagnostics"
-      operationId: diagnostics
+      summary: "Gets diagnostic information of the Nuts node"
+      operationId: "diagnostics"
       responses:
-        200:
-          description: "Diagnostics data."
+        "200":
+          description: "Successfully retrieved diagnostics"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Diagnostics"
+                $ref: '#/components/schemas/Diagnostics'
 components:
   schemas:
-    CheckHealthResponse:
-      required:
-        - status
-        - details
-      properties:
-        status:
-          type: string
-          description: Overall status derived from performed health checks. Values are "UP", "DOWN" and "UNKNOWN".
-        details:
-          type: object
-          description: Map of the performed health checks and their results.
-          additionalProperties:
-            $ref: "#/components/schemas/HealthCheckResult"
     Diagnostics:
       required:
         - network
@@ -186,23 +177,19 @@ components:
         did_documents_count:
           type: integer
           description: "total number of DID Documents"
-#    Graph:
-#      required:
-#        - vertices
-#        - edges
-#      properties:
-#        vertices:
-#          type: array
-#          description: "array of PeerIDs"
-#          items:
-#            type: string
-#        edges:
-#          type: array
-#          description: "array of tuples. PeerID -> PeerID"
-#          items:
-#            type: array
-#            items:
-#              type: string
+    Health:
+      required:
+        - status
+        - details
+      properties:
+        status:
+          type: string
+          description: Overall status derived from performed health checks. Values are "UP", "DOWN" and "UNKNOWN".
+        details:
+          type: object
+          description: Map of the performed health checks and their results.
+          additionalProperties:
+            $ref: "#/components/schemas/HealthCheckResult"
     HealthCheckResult:
       required:
         - status
@@ -212,4 +199,5 @@ components:
           description: Status of the health check. Values are "UP", "DOWN" and "UNKNOWN".
         details:
           description: Details of the health check result.
+
 

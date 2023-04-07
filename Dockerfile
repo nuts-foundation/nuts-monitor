@@ -46,6 +46,10 @@ RUN apk update \
   && update-ca-certificates
 RUN mkdir /app && cd /app
 WORKDIR /app
+RUN apk update \
+  && apk add --no-cache \
+             tzdata \
+             curl
 COPY --from=backend-builder /app/nuts-monitor .
 
 HEALTHCHECK --start-period=5s --timeout=5s --interval=10s \

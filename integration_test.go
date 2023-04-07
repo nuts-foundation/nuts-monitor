@@ -35,7 +35,7 @@ import (
 // TestStatusCodes tests if the returned errors from the API implementations are correctly translated to status codes
 func TestStatusAndHealth(t *testing.T) {
 	ts := test.BasicTestNode(t)
-	os.Setenv("NUTS_NUTSNODEADDR", ts.URL)
+	os.Setenv("NUTS_NUTSNODEADDR", ts.URL())
 	defer os.Clearenv()
 
 	httpPort := startServer(t)
