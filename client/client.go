@@ -117,6 +117,9 @@ func (hb HTTPClient) NetworkTopology(ctx context.Context) (NetworkTopology, erro
 	}
 	nt.PeerID = diagnostics.Network.Connections.PeerId
 
+	// Add own as vertice, needed for empty node
+	nt.Vertices = append(nt.Vertices, nt.PeerID)
+
 	// Peer diagnostics, this will include connections from our node to others as well.
 	response, err := hb.networkClient().GetPeerDiagnostics(ctx)
 	if err != nil {

@@ -2,7 +2,7 @@
   <div class="my-2">
     <div class="my-2 w-full h-full">
       <div class="text-xl font-semibold text-gray-700 mb-2">Network Topology</div>
-      <svg ref="svg" class="w-full min-w-full" :height="svgHeight"></svg>
+      <svg id="topology" ref="svg" class="w-full min-w-full" :height="svgHeight"></svg>
     </div>
   </div>
 </template>
