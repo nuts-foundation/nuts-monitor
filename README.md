@@ -49,6 +49,12 @@ The location of the config file can be set using e cmdline flag or environment v
 NUTS_CONFIGFILE=./server.config.yaml ./monitor
 ```
 
+You can also configure the application using environment variables (capitalize all keys and prefix with `NUTS_`):
+
+```shell
+NUTS_NUTSNODEADDR=http://nuts-node-address:1323 ./monitor
+```
+
 When running in Docker without a config file mounted at `/app/server.config.yaml` it will use the default configuration or you can change the command parameters.
 
 The `nutsnodeapikeyfile` config parameter should point to a PEM encoded private key file. The corresponding public key should be configured on the Nuts node in SSH authorized keys format.

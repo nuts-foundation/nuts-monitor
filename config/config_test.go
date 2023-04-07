@@ -30,5 +30,5 @@ func TestConfig_loadConfig(t *testing.T) {
 
 	cfg := LoadConfig()
 
-	assert.Equal(t, "http://example.com", cfg.NutsNodeAddress)
+	assert.Equal(t, "http://example.com", cfg.NutsNodeAddr)
 }

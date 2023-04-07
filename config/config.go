@@ -46,13 +46,13 @@ const defaultNutsNodeAddress = "http://localhost:1323"
 
 func defaultConfig() Config {
 	return Config{
-		NutsNodeAddress: defaultNutsNodeAddress,
+		NutsNodeAddr: defaultNutsNodeAddress,
 	}
 }
 
 type Config struct {
-	// NutsNodeAddress contains the address of the Nuts node. It's also used in the aud field when API security is enabled
-	NutsNodeAddress string `koanf:"nutsnodeaddr"`
+	// NutsNodeAddr contains the address of the Nuts node. It's also used in the aud field when API security is enabled
+	NutsNodeAddr string `koanf:"nutsnodeaddr"`
 	// NutsNodeAPIKeyFile points to the private key used to sign JWTs. If empty Nuts node API security is not enabled
 	NutsNodeAPIKeyFile string `koanf:"nutsnodeapikeyfile"`
 	// NutsNodeAPIUser contains the API key user that will go into the iss field. It must match the user with the public key from the authorized_keys file in the Nuts node

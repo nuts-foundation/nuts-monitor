@@ -31,7 +31,7 @@ import (
 func TestClient_CheckHealth(t *testing.T) {
 	ts := test.BasicTestNode(t)
 
-	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL()}}
+	client := HTTPClient{Config: config.Config{NutsNodeAddr: ts.URL()}}
 	resp, err := client.CheckHealth(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to get correct response: %v", err)
@@ -54,7 +54,7 @@ func TestClient_Diagnostics(t *testing.T) {
 		w.Write(dBytes)
 	})
 
-	client := HTTPClient{Config: config.Config{NutsNodeAddress: ts.URL()}}
+	client := HTTPClient{Config: config.Config{NutsNodeAddr: ts.URL()}}
 	resp, err := client.Diagnostics(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to get correct response: %v", err)
