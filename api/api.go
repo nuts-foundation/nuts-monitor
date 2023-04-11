@@ -53,7 +53,7 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 		Status: DOWN,
 	}
 
-	if w.Config.NutsNodeAddress != "" {
+	if w.Config.NutsNodeAddr != "" {
 		h, err := w.Client.CheckHealth(ctx)
 		if err != nil {
 			var errString interface{} = err.Error()
