@@ -100,7 +100,7 @@ type NetworkTopology struct {
 	// Edges map of PeerID -> PeerID
 	Edges []Tuple `json:"edges"`
 
-	// PeerID own nodes network ID
+	// PeerID own node's network ID
 	PeerID string `json:"peerID"`
 
 	// Vertices array of PeerIDs
