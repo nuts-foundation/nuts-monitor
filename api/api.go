@@ -91,12 +91,5 @@ func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestOb
 		return nil, err
 	}
 
-	// test
-	//networkTopology.Vertices = append(networkTopology.Vertices, "1")
-	//networkTopology.Vertices = append(networkTopology.Vertices, "2")
-	//networkTopology.Edges = append(networkTopology.Edges, client.Tuple{"1", "2"})
-	//networkTopology.Edges = append(networkTopology.Edges, client.Tuple{networkTopology.PeerID, "2"})
-	//networkTopology.Edges = append(networkTopology.Edges, client.Tuple{networkTopology.PeerID, "1"})
-
 	return NetworkTopology200JSONResponse(networkTopology), nil
 }

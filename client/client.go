@@ -135,7 +135,7 @@ func (hb HTTPClient) NetworkTopology(ctx context.Context) (NetworkTopology, erro
 
 	for k, v := range *parsedResponse.JSON200 {
 		peerID := realPeerID(k)
-		if !containsVertice(nt.Vertices, peerID) {
+		if !containsVertex(nt.Vertices, peerID) {
 			nt.Vertices = append(nt.Vertices, peerID)
 		}
 		if v.Peers != nil {
@@ -145,7 +145,7 @@ func (hb HTTPClient) NetworkTopology(ctx context.Context) (NetworkTopology, erro
 				if !containsEdge(nt.Edges, t) {
 					nt.Edges = append(nt.Edges, t)
 				}
-				if !containsVertice(nt.Vertices, otherPeerID) {
+				if !containsVertex(nt.Vertices, otherPeerID) {
 					nt.Vertices = append(nt.Vertices, otherPeerID)
 				}
 			}
@@ -168,9 +168,9 @@ func realPeerID(peerID string) string {
 	return s[0]
 }
 
-func containsVertice(vertices []string, vertice string) bool {
+func containsVertex(vertices []string, vertex string) bool {
 	for _, v := range vertices {
-		if v == vertice {
+		if v == vertex {
 			return true
 		}
 	}
