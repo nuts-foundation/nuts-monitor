@@ -205,7 +205,7 @@ components:
       properties:
         peerID:
           type: string
-          description: "own nodes network ID"
+          description: "own node's network ID"
         vertices:
           type: array
           description: "array of PeerIDs"
