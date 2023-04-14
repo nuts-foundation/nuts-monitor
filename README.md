@@ -42,7 +42,7 @@ docker run -p 1313:1313 nutsfoundation/nuts-monitor
 ```
 
 ## Configuration
-The location of the config file can be set using e cmdline flag or environment variable:
+The location of the config file can be set using a cmdline flag or environment variable:
 
 ```shell
 ./monitor --configfile=./server.config.yaml
@@ -55,7 +55,14 @@ You can also configure the application using environment variables (capitalize a
 NUTS_NUTSNODEADDR=http://nuts-node-address:1323 ./monitor
 ```
 
-When running in Docker without a config file mounted at `/app/server.config.yaml` it will use the default configuration or you can change the command parameters.
+When running in Docker without a config file mounted at `/app/server.config.yaml` it will use the default configuration, or you can change the command parameters.
+
+### Node Address
+
+You specify the Nuts node address with `nutsnodeaddr` (`NUTS_NUTSNODEADDR`).
+If you've bound the `/internal` endpoints to a different HTTP interface, you can specify it using `nutsnodeinternaladdr` (`NUTS_NUTSNODEINTERNALADDR`).
+
+### Authentication
 
 The `nutsnodeapikeyfile` config parameter should point to a PEM encoded private key file. The corresponding public key should be configured on the Nuts node in SSH authorized keys format.
 `nutsnodeapiuser` Is required when using Nuts node API token security. It must match the user in the SSH authorized keys file.
