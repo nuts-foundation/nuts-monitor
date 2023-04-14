@@ -21,6 +21,7 @@ package api
 import (
 	"context"
 	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/config"
 )
 
@@ -57,7 +58,7 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 		h, err := w.Client.CheckHealth(ctx)
 		if err != nil {
 			var errString interface{} = err.Error()
-			downResponse.Details = map[string]client.HealthCheckResult{
+			downResponse.Details = map[string]diagnostics.HealthCheckResult{
 				"node": {
 					Details: &errString,
 					Status:  "UNKNOWN",
@@ -66,7 +67,7 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 			return downResponse, nil
 		}
 		if h.Status != UP {
-			downResponse.Details = map[string]client.HealthCheckResult{
+			downResponse.Details = map[string]diagnostics.HealthCheckResult{
 				"node": {
 					Status: h.Status,
 				},
@@ -74,7 +75,7 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 			return downResponse, nil
 		}
 
-		upResponse.Details = map[string]client.HealthCheckResult{
+		upResponse.Details = map[string]diagnostics.HealthCheckResult{
 			"node": {
 				Status: h.Status,
 			},
@@ -82,4 +83,13 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 
 	}
 	return upResponse, nil
+}
+
+func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestObject) (NetworkTopologyResponseObject, error) {
+	networkTopology, err := w.Client.NetworkTopology(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return NetworkTopology200JSONResponse(networkTopology), nil
 }

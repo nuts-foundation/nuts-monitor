@@ -20,9 +20,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/client/diagnostics"
+	"nuts-foundation/nuts-monitor/client/network"
 	"nuts-foundation/nuts-monitor/test"
 	"os"
 	"testing"
@@ -59,6 +64,54 @@ func TestStatusAndHealth(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		}
 	})
+}
+
+func TestNetworkTopology(t *testing.T) {
+	ts := test.BasicTestNode(t)
+	os.Setenv("NUTS_NUTSNODEADDR", ts.URL())
+	defer os.Clearenv()
+	httpPort := startServer(t)
+	diagnosticsBytes, _ := json.Marshal(diagnostics.Diagnostics{
+		Network: diagnostics.Network{
+			Connections: struct {
+				ConnectedPeersCount int    `json:"connected_peers_count"`
+				PeerId              string `json:"peer_id"`
+			}{
+				ConnectedPeersCount: 0,
+				PeerId:              "us",
+			},
+		},
+	})
+	peers := []string{"us"}
+	peerDiagnosticsBytes, _ := json.Marshal(map[string]network.PeerDiagnostics{
+		"them": {
+			Peers: &peers,
+		},
+	})
+	ts.HandleFunc("/internal/network/v1/diagnostics/peers", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(peerDiagnosticsBytes)
+	})
+	ts.HandleFunc("/status/diagnostics", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(diagnosticsBytes)
+	})
+
+	baseUrl := fmt.Sprintf("http://localhost:%d", httpPort)
+	resp, err := http.Get(fmt.Sprintf("%s%s", baseUrl, "/web/network_topology"))
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	topology := client.NetworkTopology{}
+	bytes, _ := io.ReadAll(resp.Body)
+	_ = json.Unmarshal(bytes, &topology)
+	assert.Equal(t, "us", topology.PeerID)
+	require.Len(t, topology.Vertices, 2)
+	assert.Equal(t, "them", topology.Vertices[1])
+	assert.Equal(t, "us", topology.Vertices[0])
 }
 
 func startServer(t *testing.T) int {

@@ -18,8 +18,13 @@
 
 package api
 
-import "nuts-foundation/nuts-monitor/client"
+import (
+	"nuts-foundation/nuts-monitor/client"
+	"nuts-foundation/nuts-monitor/client/diagnostics"
+)
 
-type CheckHealthResponse = client.Health
+type CheckHealthResponse = diagnostics.Health
 
-type Diagnostics = client.Diagnostics
+type Diagnostics = diagnostics.Diagnostics
+
+type NetworkTopology = client.NetworkTopology

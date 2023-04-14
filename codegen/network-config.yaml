@@ -1,0 +1,8 @@
+package: network
+generate:
+  echo-server: false
+  client: true
+  models: true
+output-options:
+  include-tags:
+    - diagnostics

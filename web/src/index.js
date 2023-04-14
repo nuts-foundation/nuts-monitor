@@ -6,6 +6,7 @@ import App from './App.vue'
 import AdminApp from './admin/AdminApp.vue'
 import Diagnostics from './admin/Diagnostics.vue'
 import Logout from './Logout.vue'
+import NetworkTopology from './admin/NetworkTopology.vue'
 import NotFound from './NotFound.vue'
 
 const routes = [
@@ -29,6 +30,11 @@ const routes = [
         path: 'diagnostics',
         name: 'admin.diagnostics',
         component: Diagnostics
+      },
+      {
+        path: 'network_topology',
+        name: 'admin.network_topology',
+        component: NetworkTopology
       }
     ],
     //meta: { requiresAuth: true }
