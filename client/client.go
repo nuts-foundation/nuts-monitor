@@ -34,7 +34,11 @@ type HTTPClient struct {
 }
 
 func (hb HTTPClient) networkClient() network.ClientInterface {
-	response, err := network.NewClientWithResponses(hb.Config.NutsNodeAddr, network.WithHTTPClient(MustCreateHTTPClient(hb.Config)))
+	addr := hb.Config.NutsNodeInternalAddr
+	if addr == "" {
+		addr = hb.Config.NutsNodeAddr
+	}
+	response, err := network.NewClientWithResponses(addr, network.WithHTTPClient(MustCreateHTTPClient(hb.Config)))
 	if err != nil {
 		panic(err)
 	}
