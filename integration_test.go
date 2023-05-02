@@ -74,8 +74,9 @@ func TestNetworkTopology(t *testing.T) {
 	diagnosticsBytes, _ := json.Marshal(diagnostics.Diagnostics{
 		Network: diagnostics.Network{
 			Connections: struct {
-				ConnectedPeersCount int    `json:"connected_peers_count"`
-				PeerId              string `json:"peer_id"`
+				ConnectedPeers      []diagnostics.ConnectedPeer `json:"connected_peers"`
+				ConnectedPeersCount int                         `json:"connected_peers_count"`
+				PeerId              string                      `json:"peer_id"`
 			}{
 				ConnectedPeersCount: 0,
 				PeerId:              "us",
@@ -109,9 +110,9 @@ func TestNetworkTopology(t *testing.T) {
 	bytes, _ := io.ReadAll(resp.Body)
 	_ = json.Unmarshal(bytes, &topology)
 	assert.Equal(t, "us", topology.PeerID)
-	require.Len(t, topology.Vertices, 2)
-	assert.Equal(t, "them", topology.Vertices[1])
-	assert.Equal(t, "us", topology.Vertices[0])
+	require.Len(t, topology.Peers, 2)
+	assert.Equal(t, "them", topology.Peers[1].PeerID)
+	assert.Equal(t, "us", topology.Peers[0].PeerID)
 }
 
 func startServer(t *testing.T) int {
