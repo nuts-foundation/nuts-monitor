@@ -141,9 +141,17 @@ input:focus {
     }
 }
 
-.d3-tip text {
-    fill: #fff;
-    font-size: 12px;
-    stroke: none;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+.network-svg {
+    height: calc(min(100vw - 288px, 100vh - 100px));
+}
+
+#tooltip-text label {
+    display: inline-block;
+    padding-right: 2px;
+    font-size: 0.8vw;
+}
+
+#tooltip-text span {
+    display: inline-block;
+    font-size: 0.8vw;
 }

@@ -87,7 +87,7 @@
       </div>
     </nav>
 
-    <main class="ml-72 mb-14 mt-8 px-12 w-full">
+    <main class="ml-72 mt-8 px-12 w-full">
       <!-- Main content -->
       <div class="w-full m-auto max-w-screen-2xl">
         <router-view @statusUpdate="updateStatus"></router-view>

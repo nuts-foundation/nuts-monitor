@@ -24,8 +24,8 @@ import (
 	"net/http"
 	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/client/network"
+	"nuts-foundation/nuts-monitor/client/vdr"
 	"nuts-foundation/nuts-monitor/config"
-	"strings"
 )
 
 // HTTPClient holds the server address and other basic settings for the http client
@@ -39,6 +39,18 @@ func (hb HTTPClient) networkClient() network.ClientInterface {
 		addr = hb.Config.NutsNodeAddr
 	}
 	response, err := network.NewClientWithResponses(addr, network.WithHTTPClient(MustCreateHTTPClient(hb.Config)))
+	if err != nil {
+		panic(err)
+	}
+	return response
+}
+
+func (hb HTTPClient) vdrClient() vdr.ClientInterface {
+	addr := hb.Config.NutsNodeInternalAddr
+	if addr == "" {
+		addr = hb.Config.NutsNodeAddr
+	}
+	response, err := vdr.NewClientWithResponses(addr, vdr.WithHTTPClient(MustCreateHTTPClient(hb.Config)))
 	if err != nil {
 		panic(err)
 	}
@@ -99,93 +111,42 @@ func (hb HTTPClient) Diagnostics(ctx context.Context) (*diagnostics.Diagnostics,
 	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
 }
 
-// NetworkTopology holds vertices and edges, also used in webAPI
-type NetworkTopology struct {
-	// Edges map of PeerID -> PeerID
-	Edges []Tuple `json:"edges"`
-
-	// PeerID own node's network ID
-	PeerID string `json:"peerID"`
-
-	// Vertices array of PeerIDs
-	Vertices []string `json:"vertices"`
-}
-
-// NetworkTopology returns the vertices and edges of the network.
-func (hb HTTPClient) NetworkTopology(ctx context.Context) (NetworkTopology, error) {
+// PeerDiagnostics returns the PeerDiagnostics per PeerID.
+func (hb HTTPClient) PeerDiagnostics(ctx context.Context) (map[string]network.PeerDiagnostics, error) {
 	// first get diagnostics for our node's information
-	nt := NetworkTopology{}
-	diagnostics, err := hb.Diagnostics(ctx)
-	if err != nil {
-		return nt, err
-	}
-	nt.PeerID = diagnostics.Network.Connections.PeerId
+	peerDiagnostics := make(map[string]network.PeerDiagnostics)
 
-	// Add own as vertice, needed for empty node
-	nt.Vertices = append(nt.Vertices, nt.PeerID)
-
-	// Peer diagnostics, this will include connections from our node to others as well.
 	response, err := hb.networkClient().GetPeerDiagnostics(ctx)
 	if err != nil {
-		return nt, err
+		return peerDiagnostics, err
 	}
 	if err := TestResponseCode(http.StatusOK, response); err != nil {
-		return nt, err
+		return peerDiagnostics, err
 	}
 	parsedResponse, err := network.ParseGetPeerDiagnosticsResponse(response)
 	if err != nil {
-		return nt, err
+		return peerDiagnostics, err
 	}
-
-	for k, v := range *parsedResponse.JSON200 {
-		peerID := realPeerID(k)
-		if !containsVertex(nt.Vertices, peerID) {
-			nt.Vertices = append(nt.Vertices, peerID)
-		}
-		if v.Peers != nil {
-			for _, connectedPeer := range *v.Peers {
-				otherPeerID := realPeerID(connectedPeer)
-				t := Tuple([2]string{otherPeerID, peerID})
-				if !containsEdge(nt.Edges, t) {
-					nt.Edges = append(nt.Edges, t)
-				}
-				if !containsVertex(nt.Vertices, otherPeerID) {
-					nt.Vertices = append(nt.Vertices, otherPeerID)
-				}
-			}
-		}
+	if parsedResponse.JSON200 != nil {
+		return *parsedResponse.JSON200, nil
 	}
-
-	return nt, nil
+	return peerDiagnostics, fmt.Errorf("received incorrect response from node: %s", string(parsedResponse.Body))
 }
 
-type Tuple [2]string
-
-func (t Tuple) equals(other Tuple) bool {
-	return (t[0] == other[0] && t[1] == other[1]) ||
-		(t[0] == other[1] && t[1] == other[0])
-}
-
-// realPeerID removes the -bootstrap postfix
-func realPeerID(peerID string) string {
-	s := strings.Split(peerID, "-bootstrap")
-	return s[0]
-}
-
-func containsVertex(vertices []string, vertex string) bool {
-	for _, v := range vertices {
-		if v == vertex {
-			return true
-		}
+func (hb HTTPClient) DIDDocument(ctx context.Context, did string) (*vdr.DIDResolutionResult, error) {
+	response, err := hb.vdrClient().GetDID(ctx, did, &vdr.GetDIDParams{})
+	if err != nil {
+		return nil, err
 	}
-	return false
-}
-
-func containsEdge(edges []Tuple, tuple Tuple) bool {
-	for _, v := range edges {
-		if v.equals(tuple) {
-			return true
-		}
+	if err := TestResponseCode(http.StatusOK, response); err != nil {
+		return nil, err
 	}
-	return false
+	result, err := vdr.ParseGetDIDResponse(response)
+	if err != nil {
+		return nil, err
+	}
+	if result.JSON200 != nil {
+		return result.JSON200, nil
+	}
+	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
 }

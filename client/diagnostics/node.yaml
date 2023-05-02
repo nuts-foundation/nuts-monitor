@@ -64,9 +64,14 @@ components:
         connections:
           type: object
           required:
+            - connected_peers
             - connected_peers_count
             - peer_id
           properties:
+            connected_peers:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConnectedPeer'
             connected_peers_count:
               type: integer
               description: "number of peers connected"
@@ -96,11 +101,31 @@ components:
               type: integer
               description: "number of failed internal events"
             stored_database_size_bytes:
-              type: number
+              type: integer
               description: "size of the DB in bytes"
             transaction_count:
-              type: number
+              type: integer
               description: "number of transactions on the network"
+    ConnectedPeer:
+      type: object
+      description: "information on a single connected peer"
+      required:
+        - id
+        - address
+        - authenticated
+      properties:
+        id:
+          type: string
+          description: "PeerID aka UUID of a node"
+        address:
+          type: string
+          description: "domain or IP address of connected node"
+        nodedid:
+          type: string
+          description: "NodeDID if connection is authenticated"
+        authenticated:
+          type: boolean
+          description: "True if NodeDID and certificate are correctly configured"
     Status:
       type: object
       description: "characteristics of running process"
@@ -120,7 +145,7 @@ components:
           type: string
           description: "Github tag or branch"
         uptime:
-          type: number
+          type: integer
           description: "Nanoseconds of uptime"
     VCR:
       type: object

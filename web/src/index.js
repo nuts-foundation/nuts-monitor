@@ -9,6 +9,12 @@ import Logout from './Logout.vue'
 import NetworkTopology from './admin/NetworkTopology.vue'
 import NotFound from './NotFound.vue'
 
+// Vuetify
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
 const routes = [
   {
     name: 'logout',
@@ -55,6 +61,12 @@ router.beforeEach(() => {
 
 const app = createApp(App)
 
+const vuetify = createVuetify({
+  components,
+  directives,
+})
+
 app.use(router)
+app.use(vuetify)
 app.use(Api, { forbiddenRoute: { name: 'logout' } })
 app.mount('#app')

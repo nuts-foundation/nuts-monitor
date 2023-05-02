@@ -8,7 +8,9 @@ apis:
 
 apiclient:
 	oapi-codegen --config codegen/diagnostics-config.yaml client/diagnostics/node.yaml | gofmt > client/diagnostics/generated.go
+	oapi-codegen --config codegen/common-config.yaml https://raw.githubusercontent.com/nuts-foundation/nuts-node/master/docs/_static/common/ssi_types.yaml | gofmt > client/common/generated.go
 	oapi-codegen --config codegen/network-config.yaml https://raw.githubusercontent.com/nuts-foundation/nuts-node/master/docs/_static/network/v1.yaml | gofmt > client/network/generated.go
+	oapi-codegen --config codegen/vdr-config.yaml https://raw.githubusercontent.com/nuts-foundation/nuts-node/master/docs/_static/vdr/v1.yaml | gofmt > client/vdr/generated.go
 
 test: backend-test feature-test
 

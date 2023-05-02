@@ -12,9 +12,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// ConnectedPeer information on a single connected peer
+type ConnectedPeer struct {
+	// Address domain or IP address of connected node
+	Address string `json:"address"`
+
+	// Authenticated True if NodeDID and certificate are correctly configured
+	Authenticated bool `json:"authenticated"`
+
+	// Id PeerID aka UUID of a node
+	Id string `json:"id"`
+
+	// Nodedid NodeDID if connection is authenticated
+	Nodedid *string `json:"nodedid,omitempty"`
+}
+
 // Network network and connection diagnostics
 type Network struct {
 	Connections struct {
+		// ConnectedPeers information on a single connected peer
+		ConnectedPeers ConnectedPeer `json:"connected_peers"`
+
 		// ConnectedPeersCount number of peers connected
 		ConnectedPeersCount int `json:"connected_peers_count"`
 
