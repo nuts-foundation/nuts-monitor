@@ -23,8 +23,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
+	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/nuts-foundation/go-did/did"
 	"nuts-foundation/nuts-monitor/client/vdr"
@@ -186,7 +188,8 @@ func (ts TopologyService) addInfoToPeers(ctx context.Context, peers []Peer) {
 					} else {
 						wgTLS.Add(1)
 						go func(peer *Peer) {
-							conn, err := tls.Dial("tcp", nutsComm, &tls.Config{InsecureSkipVerify: true})
+							dialer := net.Dialer{Timeout: 2 * time.Second}
+							conn, err := tls.DialWithDialer(&dialer, "tcp", nutsComm, &tls.Config{InsecureSkipVerify: true})
 							if err != nil {
 								logrus.Errorf("failed to connect over TCP to %s: %v", nutsComm, err)
 							} else {
