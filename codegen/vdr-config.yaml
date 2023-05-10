@@ -1,0 +1,10 @@
+package: vdr
+generate:
+  echo-server: false
+  client: true
+  models: true
+import-mapping:
+  '../common/ssi_types.yaml': nuts-foundation/nuts-monitor/client/common
+output-options:
+  include-tags:
+    - DID

@@ -86,7 +86,11 @@ func (w Wrapper) CheckHealth(ctx context.Context, _ CheckHealthRequestObject) (C
 }
 
 func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestObject) (NetworkTopologyResponseObject, error) {
-	networkTopology, err := w.Client.NetworkTopology(ctx)
+	ts := client.TopologyService{
+		HTTPClient: w.Client,
+	}
+
+	networkTopology, err := ts.NetworkTopology(ctx)
 	if err != nil {
 		return nil, err
 	}

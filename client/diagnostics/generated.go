@@ -13,6 +13,21 @@ import (
 	"strings"
 )
 
+// ConnectedPeer information on a single connected peer
+type ConnectedPeer struct {
+	// Address domain or IP address of connected node
+	Address string `json:"address"`
+
+	// Authenticated True if NodeDID and certificate are correctly configured
+	Authenticated bool `json:"authenticated"`
+
+	// Id PeerID aka UUID of a node
+	Id string `json:"id"`
+
+	// Nodedid NodeDID if connection is authenticated
+	Nodedid *string `json:"nodedid,omitempty"`
+}
+
 // Diagnostics defines model for Diagnostics.
 type Diagnostics struct {
 	// Network network and connection diagnostics
@@ -49,6 +64,8 @@ type HealthCheckResult struct {
 // Network network and connection diagnostics
 type Network struct {
 	Connections struct {
+		ConnectedPeers []ConnectedPeer `json:"connected_peers"`
+
 		// ConnectedPeersCount number of peers connected
 		ConnectedPeersCount int `json:"connected_peers_count"`
 
@@ -71,10 +88,10 @@ type Network struct {
 		FailedEvents int `json:"failed_events"`
 
 		// StoredDatabaseSizeBytes size of the DB in bytes
-		StoredDatabaseSizeBytes float32 `json:"stored_database_size_bytes"`
+		StoredDatabaseSizeBytes int `json:"stored_database_size_bytes"`
 
 		// TransactionCount number of transactions on the network
-		TransactionCount float32 `json:"transaction_count"`
+		TransactionCount int `json:"transaction_count"`
 	} `json:"state"`
 }
 
@@ -90,7 +107,7 @@ type Status struct {
 	SoftwareVersion string `json:"software_version"`
 
 	// Uptime Nanoseconds of uptime
-	Uptime float32 `json:"uptime"`
+	Uptime int `json:"uptime"`
 }
 
 // VCR key numbers on credentials
