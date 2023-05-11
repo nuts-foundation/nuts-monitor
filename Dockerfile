@@ -38,7 +38,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o
 #
 # Runtime
 #
-FROM alpine:3.17
+FROM alpine:3.18
 RUN apk update \
   && apk add --no-cache \
              tzdata \
