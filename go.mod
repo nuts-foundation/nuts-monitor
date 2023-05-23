@@ -8,8 +8,10 @@ require (
 	github.com/knadh/koanf v1.5.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lestrrat-go/jwx v1.2.25
+	github.com/nuts-foundation/go-did v0.5.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	golang.org/x/crypto v0.9.0
 )
 
@@ -32,11 +34,9 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/nuts-foundation/did-ockam v0.0.0-20230313074753-fafd938c948c // indirect
-	github.com/nuts-foundation/go-did v0.5.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shengdoushi/base58 v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/net v0.10.0 // indirect
