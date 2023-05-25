@@ -19,6 +19,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -27,6 +28,7 @@ import (
 	"nuts-foundation/nuts-monitor/api"
 	"nuts-foundation/nuts-monitor/client"
 	"nuts-foundation/nuts-monitor/config"
+	"nuts-foundation/nuts-monitor/data"
 	"os"
 	"path"
 
@@ -40,17 +42,57 @@ const assetPath = "web"
 var embeddedFiles embed.FS
 
 func main() {
-	e := newEchoServer()
+	// first load the config
+	config := config.LoadConfig()
+	config.Print(log.Writer())
+
+	// then initialize the data storage and fill it with the initial transactions
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	store := data.NewStore()
+	loadHistory(store, config)
+	store.Start(ctx)
+
+	// start the web server
+	e := newEchoServer(config, store)
 
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1313)))
 }
 
-func newEchoServer() *echo.Echo {
-	// config
-	config := config.LoadConfig()
-	config.Print(log.Writer())
+// loadHistory requests transactions from the Nuts node per 100 and stores them in the data store
+func loadHistory(store *data.Store, c config.Config) {
+	// initialize the client
+	client := client.HTTPClient{
+		Config: c,
+	}
 
+	// load the initial transactions
+	// ListTransactions per batch of 100, stop if the list is empty
+	// currentOffset is used to determine the offset for the next batch
+	currentOffset := 0
+	for {
+		transactions, err := client.ListTransactions(context.Background(), currentOffset, currentOffset+100)
+		if err != nil {
+			log.Fatalf("failed to load historic transactions: %s", err)
+		}
+		if len(transactions) == 0 {
+			break
+		}
+		// the transactions need to be converted from string to Transaction
+		for _, stringTransactions := range transactions {
+			transaction, err := data.FromJWS(stringTransactions)
+			if err != nil {
+				log.Printf("failed to parse transaction: %s", err)
+			}
+			store.Add(*transaction)
+		}
+		// increase offset for next batch
+		currentOffset += 100
+	}
+}
+
+func newEchoServer(config config.Config, store *data.Store) *echo.Echo {
 	// http server
 	e := echo.New()
 	e.HideBanner = true
@@ -68,6 +110,7 @@ func newEchoServer() *echo.Echo {
 		Client: client.HTTPClient{
 			Config: config,
 		},
+		DataStore: store,
 	}
 	api.RegisterHandlers(e, api.NewStrictHandler(apiWrapper, []api.StrictMiddlewareFunc{}))
 
