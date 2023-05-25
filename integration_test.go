@@ -28,6 +28,7 @@ import (
 	"nuts-foundation/nuts-monitor/client"
 	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/client/network"
+	"nuts-foundation/nuts-monitor/config"
 	"nuts-foundation/nuts-monitor/test"
 	"os"
 	"testing"
@@ -116,7 +117,8 @@ func TestNetworkTopology(t *testing.T) {
 }
 
 func startServer(t *testing.T) int {
-	e := newEchoServer()
+	cfg := config.LoadConfig()
+	e := newEchoServer(cfg, nil)
 
 	httpPort := test.FreeTCPPort()
 
