@@ -28,35 +28,18 @@ import (
 // A transaction can be added, the store will resolve the signer and the controller of the signer.
 type Store struct {
 	mapping        map[string]string
-	slidingWindows []slidingWindow
+	slidingWindows []*slidingWindow
 }
 
 func NewStore() *Store {
 	s := &Store{
 		mapping: make(map[string]string),
-		slidingWindows: []slidingWindow{
-			{
-				resolution:       time.Minute,
-				length:           time.Hour,
-				evictionInterval: time.Second,
-			},
-			{
-				resolution:       time.Hour,
-				length:           24 * time.Hour,
-				evictionInterval: time.Minute,
-			},
-			{
-				resolution:       24 * time.Hour,
-				length:           30 * 24 * time.Hour,
-				evictionInterval: time.Minute,
-			},
-		},
 	}
 
 	// initialize all windows with empty dataPoints using the init function
-	for i := range s.slidingWindows {
-		s.slidingWindows[i].init()
-	}
+	s.slidingWindows = append(s.slidingWindows, NewSlidingWindow(time.Minute, time.Hour, time.Second))
+	s.slidingWindows = append(s.slidingWindows, NewSlidingWindow(time.Hour, 24*time.Hour, time.Minute))
+	s.slidingWindows = append(s.slidingWindows, NewSlidingWindow(24*time.Hour, 30*24*time.Hour, time.Minute))
 
 	return s
 }
@@ -64,7 +47,7 @@ func NewStore() *Store {
 // Start starts the sliding windows
 func (s *Store) Start(ctx context.Context) {
 	for i := range s.slidingWindows {
-		s.slidingWindows[i].start(ctx)
+		s.slidingWindows[i].Start(ctx)
 	}
 }
 
@@ -72,7 +55,7 @@ func (s *Store) Start(ctx context.Context) {
 func (s *Store) Add(transaction Transaction) {
 	// first add the transaction to the sliding windows
 	for i := range s.slidingWindows {
-		s.slidingWindows[i].addCount(transaction.SigTime)
+		s.slidingWindows[i].AddCount(transaction.SigTime)
 	}
 
 	// todo: resolve the controller of the signer

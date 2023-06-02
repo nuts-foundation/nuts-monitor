@@ -80,8 +80,8 @@ func loadHistory(store *data.Store, c config.Config) {
 			break
 		}
 		// the transactions need to be converted from string to Transaction
-		for _, stringTransactions := range transactions {
-			transaction, err := data.FromJWS(stringTransactions)
+		for _, stringTransaction := range transactions {
+			transaction, err := data.FromJWS(stringTransaction)
 			if err != nil {
 				log.Printf("failed to parse transaction: %s", err)
 			}

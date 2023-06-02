@@ -38,21 +38,20 @@ type slidingWindow struct {
 	dataPoints       []DataPoint
 }
 
-// init fill the dataPoints slice with DataPoints
-func (s *slidingWindow) init() {
-	s.dataPoints = make([]DataPoint, s.maxLength())
-
-	now := time.Now().Truncate(s.resolution)
-
-	for i := len(s.dataPoints) - 1; i >= 0; i-- {
-		s.dataPoints[i] = DataPoint{
-			Timestamp: now.Truncate(s.resolution).Add(time.Duration(i-len(s.dataPoints)+1) * s.resolution),
-			Count:     0,
-		}
+func NewSlidingWindow(resolution, length, evictionInterval time.Duration) *slidingWindow {
+	s := &slidingWindow{
+		resolution:       resolution,
+		length:           length,
+		evictionInterval: evictionInterval,
+		dataPoints:       []DataPoint{},
 	}
+
+	s.consolidate()
+
+	return s
 }
 
-func (s *slidingWindow) start(ctx context.Context) {
+func (s *slidingWindow) Start(ctx context.Context) {
 	done := ctx.Done()
 
 	go func() {
@@ -63,7 +62,10 @@ func (s *slidingWindow) start(ctx context.Context) {
 			case <-done:
 				return
 			case <-ticker.C:
+				s.mutex.Lock()
 				s.slide()
+				s.consolidate()
+				s.mutex.Unlock()
 			}
 		}
 	}()
@@ -76,9 +78,6 @@ func (s *slidingWindow) maxLength() int {
 
 // slide removes dataPoints older than length
 func (s *slidingWindow) slide() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	now := time.Now().Truncate(s.resolution)
 
 	cutoff := -1
@@ -93,29 +92,16 @@ func (s *slidingWindow) slide() {
 		return
 	}
 
-	// create a new slice with length equal to maxLength and fill it with the dataPoints that are not older than length
-	newSet := make([]DataPoint, s.maxLength())
-
-	copy(newSet, s.dataPoints[cutoff:])
-
-	// fill the remainder of the slice with new DataPoints, the last dataPoint should be time.Now().Truncate(s.resolution)
-	// each dataPoint before that should be time.Now().Truncate(s.resolution).Add(-s.resolution)
-	for i := len(newSet) - 1; i > cutoff; i-- {
-		newSet[i] = DataPoint{
-			Timestamp: now.Truncate(s.resolution).Add(time.Duration(i-len(newSet)+1) * s.resolution),
-			Count:     0,
-		}
-	}
-	s.dataPoints = newSet
+	s.dataPoints = s.dataPoints[cutoff:]
 }
 
-// addCount adds +1 to the DataPoint at the correct moment
-func (s *slidingWindow) addCount(at time.Time) {
+// AddCount adds +1 to the DataPoint at the correct moment
+func (s *slidingWindow) AddCount(at time.Time) {
 	// first we truncate the at time to the correct resolution
 	at = at.Truncate(s.resolution)
 
 	// then we check if the at time is in the sliding window
-	if at.Before(time.Now().Add(-s.length)) {
+	if at.Before(time.Now().Add(-s.length).Truncate(s.resolution)) {
 		// the at time is before the sliding window, we ignore it
 		return
 	}
@@ -125,7 +111,7 @@ func (s *slidingWindow) addCount(at time.Time) {
 	defer s.mutex.Unlock()
 
 	for i, dataPoint := range s.dataPoints {
-		if dataPoint.Timestamp == at {
+		if dataPoint.Timestamp.Equal(at) {
 			s.dataPoints[i].Count++
 			return
 		}
@@ -137,10 +123,46 @@ func (s *slidingWindow) addCount(at time.Time) {
 		Count:     1,
 	})
 
-	// sort the dataPoints
-	sort.Slice(s.dataPoints, func(i, j int) bool {
-		return s.dataPoints[i].Timestamp.Before(s.dataPoints[j].Timestamp)
-	})
+	// consolidate the window
+	s.consolidate()
 
 	return
+}
+
+// consolidate the window, this will fill any gaps in the dataPoints slice
+// it'll first truncate the slice and remove all old dataPoints
+// then it'll fill the slice with new DataPoints
+// and sort it afterwards
+func (s *slidingWindow) consolidate() {
+	s.slide()
+
+	now := time.Now().Truncate(s.resolution)
+
+	// first create a new slice with maxLen
+	newDataPoints := make([]DataPoint, s.maxLength())
+
+	// prefill the new slice with DataPoints
+	for i := len(newDataPoints) - 1; i >= 0; i-- {
+		newDataPoints[i] = DataPoint{
+			Timestamp: now.Add(time.Duration(i-len(newDataPoints)+1) * s.resolution),
+			Count:     0,
+		}
+	}
+
+	// then loop over the current dataPoints and add the count from those points to the correct new DataPoint
+	for _, dataPoint := range s.dataPoints {
+		for i, newDataPoint := range newDataPoints {
+			if newDataPoint.Timestamp.Equal(dataPoint.Timestamp) {
+				newDataPoints[i].Count += dataPoint.Count
+			}
+		}
+	}
+
+	// sort the dataPoints
+	sort.Slice(newDataPoints, func(i, j int) bool {
+		return newDataPoints[i].Timestamp.Before(newDataPoints[j].Timestamp)
+	})
+
+	// set the new dataPoints
+	s.dataPoints = newDataPoints
 }

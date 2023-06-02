@@ -110,26 +110,22 @@ func (w Wrapper) GetWebTransactionsAggregated(ctx context.Context, _ GetWebTrans
 	// loop over the 3 categories of data points
 	// for each category, loop over the data points and add them to the correct category in the response object
 	for _, dp := range dataPoints[0] {
-		response.Hourly = append(response.Hourly, DataPoint{
-			Timestamp: int(dp.Timestamp.Unix()),
-			Label:     dp.Timestamp.Format(time.RFC3339),
-			Value:     int(dp.Count),
-		})
+		response.Hourly = append(response.Hourly, toDataPoint(dp))
 	}
 	for _, dp := range dataPoints[1] {
-		response.Daily = append(response.Daily, DataPoint{
-			Timestamp: int(dp.Timestamp.Unix()),
-			Label:     dp.Timestamp.Format(time.RFC3339),
-			Value:     int(dp.Count),
-		})
+		response.Daily = append(response.Daily, toDataPoint(dp))
 	}
 	for _, dp := range dataPoints[2] {
-		response.Monthly = append(response.Monthly, DataPoint{
-			Timestamp: int(dp.Timestamp.Unix()),
-			Label:     dp.Timestamp.Format(time.RFC3339),
-			Value:     int(dp.Count),
-		})
+		response.Monthly = append(response.Monthly, toDataPoint(dp))
 	}
 
 	return GetWebTransactionsAggregated200JSONResponse(response), nil
+}
+
+func toDataPoint(dp data.DataPoint) DataPoint {
+	return DataPoint{
+		Timestamp: int(dp.Timestamp.Unix()),
+		Label:     dp.Timestamp.Format(time.RFC3339),
+		Value:     int(dp.Count),
+	}
 }
