@@ -114,7 +114,7 @@ components:
             description: "time of the data point formatted as RFC3339"
           value:
             type: integer
-            description: "number of transactions at the given timestamp"
+            description: "number of transactions between the given timestamp and the next timestamp"
     Diagnostics:
       required:
         - network
