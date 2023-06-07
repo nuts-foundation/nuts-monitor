@@ -23,6 +23,8 @@ import (
 	"nuts-foundation/nuts-monitor/client"
 	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/config"
+	"nuts-foundation/nuts-monitor/data"
+	"time"
 )
 
 var _ StrictServerInterface = (*Wrapper)(nil)
@@ -33,8 +35,9 @@ const (
 )
 
 type Wrapper struct {
-	Config config.Config
-	Client client.HTTPClient
+	Config    config.Config
+	Client    client.HTTPClient
+	DataStore *data.Store
 }
 
 func (w Wrapper) Diagnostics(ctx context.Context, _ DiagnosticsRequestObject) (DiagnosticsResponseObject, error) {
@@ -96,4 +99,33 @@ func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestOb
 	}
 
 	return NetworkTopology200JSONResponse(networkTopology), nil
+}
+
+func (w Wrapper) GetWebTransactionsAggregated(ctx context.Context, _ GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error) {
+	// get data from the store
+	dataPoints := w.DataStore.GetTransactions()
+
+	// convert the data points to the response object
+	response := AggregatedTransactions{}
+	// loop over the 3 categories of data points
+	// for each category, loop over the data points and add them to the correct category in the response object
+	for _, dp := range dataPoints[0] {
+		response.Hourly = append(response.Hourly, toDataPoint(dp))
+	}
+	for _, dp := range dataPoints[1] {
+		response.Daily = append(response.Daily, toDataPoint(dp))
+	}
+	for _, dp := range dataPoints[2] {
+		response.Monthly = append(response.Monthly, toDataPoint(dp))
+	}
+
+	return GetWebTransactionsAggregated200JSONResponse(response), nil
+}
+
+func toDataPoint(dp data.DataPoint) DataPoint {
+	return DataPoint{
+		Timestamp: int(dp.Timestamp.Unix()),
+		Label:     dp.Timestamp.Format(time.RFC3339),
+		Value:     int(dp.Count),
+	}
 }

@@ -150,3 +150,27 @@ func (hb HTTPClient) DIDDocument(ctx context.Context, did string) (*vdr.DIDResol
 	}
 	return nil, fmt.Errorf("received incorrect response from node: %s", string(result.Body))
 }
+
+// ListTransactions returns transactions in a certain range according to LC value
+func (hb HTTPClient) ListTransactions(ctx context.Context, start int, end int) ([]string, error) {
+	var transactions []string
+
+	response, err := hb.networkClient().ListTransactions(ctx, &network.ListTransactionsParams{
+		Start: &start,
+		End:   &end,
+	})
+	if err != nil {
+		return transactions, err
+	}
+	if err := TestResponseCode(http.StatusOK, response); err != nil {
+		return transactions, err
+	}
+	parsedResponse, err := network.ParseListTransactionsResponse(response)
+	if err != nil {
+		return transactions, err
+	}
+	if parsedResponse.JSON200 != nil {
+		return *parsedResponse.JSON200, nil
+	}
+	return transactions, nil
+}

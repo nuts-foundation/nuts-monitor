@@ -7,6 +7,7 @@ import AdminApp from './admin/AdminApp.vue'
 import Diagnostics from './admin/Diagnostics.vue'
 import Logout from './Logout.vue'
 import NetworkTopology from './admin/NetworkTopology.vue'
+import Transactions from './admin/Transactions.vue'
 import NotFound from './NotFound.vue'
 
 // Vuetify
@@ -41,6 +42,11 @@ const routes = [
         path: 'network_topology',
         name: 'admin.network_topology',
         component: NetworkTopology
+      },
+      {
+        path: 'transactions',
+        name: 'admin.transactions',
+        component: Transactions
       }
     ],
     //meta: { requiresAuth: true }
