@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Nuts Registry Admin API
+  title: Nuts Monitor API
   version: 1.0.0
 
 paths:
@@ -44,8 +44,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NetworkTopology"
+  /web/transactions/aggregated:
+    get:
+      summary: "Returns the transactions aggregated by time"
+      description: >
+        Returns the transactions aggregated by time. It contains three sets of data points:
+        - an interval of 1 hour with a resolution of 1 minute
+        - an interval of 1 day with a resolution of 1 hour
+        - an interval of 1 month with a resolution of 1 day
+        operationId: aggregatedTransactions
+      responses:
+          200:
+            description: "Aggregated transactions data"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/AggregatedTransactions"
 components:
   schemas:
+    AggregatedTransactions:
+      type: object
+      description: "Aggregated transactions data"
+      required:
+        - hourly
+        - daily
+        - monthly
+      properties:
+        hourly:
+          type: array
+          description: "Aggregated transactions data for the last hour"
+          items:
+            $ref: "#/components/schemas/DataPoint"
+        daily:
+          type: array
+          description: "Aggregated transactions data for the last day"
+          items:
+            $ref: "#/components/schemas/DataPoint"
+        monthly:
+          type: array
+          description: "Aggregated transactions data for the last month"
+          items:
+            $ref: "#/components/schemas/DataPoint"
     CheckHealthResponse:
       required:
         - status
@@ -59,6 +98,23 @@ components:
           description: Map of the performed health checks and their results.
           additionalProperties:
             $ref: "#/components/schemas/HealthCheckResult"
+    DataPoint:
+        type: object
+        description: "Data point"
+        required:
+            - timestamp
+            - label
+            - value
+        properties:
+          timestamp:
+            type: integer
+            description: "time of the data point formatted as unix timestamp"
+          label:
+            type: string
+            description: "time of the data point formatted as RFC3339"
+          value:
+            type: integer
+            description: "number of transactions between the given timestamp and the next timestamp"
     Diagnostics:
       required:
         - network

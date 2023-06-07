@@ -12,27 +12,33 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// ConnectedPeer information on a single connected peer
-type ConnectedPeer struct {
-	// Address domain or IP address of connected node
-	Address string `json:"address"`
+// AggregatedTransactions Aggregated transactions data
+type AggregatedTransactions struct {
+	// Daily Aggregated transactions data for the last day
+	Daily []DataPoint `json:"daily"`
 
-	// Authenticated True if NodeDID and certificate are correctly configured
-	Authenticated bool `json:"authenticated"`
+	// Hourly Aggregated transactions data for the last hour
+	Hourly []DataPoint `json:"hourly"`
 
-	// Id PeerID aka UUID of a node
-	Id string `json:"id"`
+	// Monthly Aggregated transactions data for the last month
+	Monthly []DataPoint `json:"monthly"`
+}
 
-	// Nodedid NodeDID if connection is authenticated
-	Nodedid *string `json:"nodedid,omitempty"`
+// DataPoint Data point
+type DataPoint struct {
+	// Label time of the data point formatted as RFC3339
+	Label string `json:"label"`
+
+	// Timestamp time of the data point formatted as unix timestamp
+	Timestamp int `json:"timestamp"`
+
+	// Value number of transactions at the given timestamp
+	Value int `json:"value"`
 }
 
 // Network network and connection diagnostics
 type Network struct {
 	Connections struct {
-		// ConnectedPeers information on a single connected peer
-		ConnectedPeers ConnectedPeer `json:"connected_peers"`
-
 		// ConnectedPeersCount number of peers connected
 		ConnectedPeersCount int `json:"connected_peers_count"`
 
@@ -122,6 +128,9 @@ type ServerInterface interface {
 	// Returns the network as a graph model
 	// (GET /web/network_topology)
 	NetworkTopology(ctx echo.Context) error
+	// Returns the transactions aggregated by time
+	// (GET /web/transactions/aggregated)
+	GetWebTransactionsAggregated(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -156,6 +165,15 @@ func (w *ServerInterfaceWrapper) NetworkTopology(ctx echo.Context) error {
 	return err
 }
 
+// GetWebTransactionsAggregated converts echo context to params.
+func (w *ServerInterfaceWrapper) GetWebTransactionsAggregated(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetWebTransactionsAggregated(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -187,6 +205,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/health", wrapper.CheckHealth)
 	router.GET(baseURL+"/web/diagnostics", wrapper.Diagnostics)
 	router.GET(baseURL+"/web/network_topology", wrapper.NetworkTopology)
+	router.GET(baseURL+"/web/transactions/aggregated", wrapper.GetWebTransactionsAggregated)
 
 }
 
@@ -247,6 +266,22 @@ func (response NetworkTopology200JSONResponse) VisitNetworkTopologyResponse(w ht
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetWebTransactionsAggregatedRequestObject struct {
+}
+
+type GetWebTransactionsAggregatedResponseObject interface {
+	VisitGetWebTransactionsAggregatedResponse(w http.ResponseWriter) error
+}
+
+type GetWebTransactionsAggregated200JSONResponse AggregatedTransactions
+
+func (response GetWebTransactionsAggregated200JSONResponse) VisitGetWebTransactionsAggregatedResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// More elaborate health check to conform the app is (probably) functioning correctly
@@ -258,6 +293,9 @@ type StrictServerInterface interface {
 	// Returns the network as a graph model
 	// (GET /web/network_topology)
 	NetworkTopology(ctx context.Context, request NetworkTopologyRequestObject) (NetworkTopologyResponseObject, error)
+	// Returns the transactions aggregated by time
+	// (GET /web/transactions/aggregated)
+	GetWebTransactionsAggregated(ctx context.Context, request GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx echo.Context, args interface{}) (interface{}, error)
@@ -336,6 +374,29 @@ func (sh *strictHandler) NetworkTopology(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(NetworkTopologyResponseObject); ok {
 		return validResponse.VisitNetworkTopologyResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetWebTransactionsAggregated operation middleware
+func (sh *strictHandler) GetWebTransactionsAggregated(ctx echo.Context) error {
+	var request GetWebTransactionsAggregatedRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWebTransactionsAggregated(ctx.Request().Context(), request.(GetWebTransactionsAggregatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWebTransactionsAggregated")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetWebTransactionsAggregatedResponseObject); ok {
+		return validResponse.VisitGetWebTransactionsAggregatedResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("Unexpected response type: %T", response)
 	}
