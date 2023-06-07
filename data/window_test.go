@@ -41,6 +41,21 @@ func TestSlidingWindow_AddCount(t *testing.T) {
 		assert.Equal(t, now.Truncate(time.Second), window.dataPoints[9].Timestamp)
 	})
 
+	t.Run("adds a new DataPoint with a clockdrift", func(t *testing.T) {
+		now := time.Now().Add(time.Second * 2)
+
+		window := slidingWindow{
+			resolution: time.Second,
+			length:     time.Second * 10,
+			clockdrift: time.Second * 5,
+		}
+
+		window.AddCount(now)
+
+		assert.Len(t, window.dataPoints, 10)
+		assert.Equal(t, uint32(1), window.dataPoints[6].Count)
+	})
+
 	t.Run("increases Count of existing DataPoint", func(t *testing.T) {
 		now := time.Now().Truncate(time.Second)
 		window := slidingWindow{
@@ -72,7 +87,7 @@ func TestSlidingWindow_slide(t *testing.T) {
 			},
 		}
 
-		window.slide()
+		window.slide(now)
 
 		assert.Len(t, window.dataPoints, 2)
 		assert.Equal(t, now.Add(time.Second*-9), window.dataPoints[0].Timestamp)
@@ -143,4 +158,27 @@ func TestSlidingWindow_Start(t *testing.T) {
 		require.Len(t, window.dataPoints, 5)
 		assert.Equal(t, uint32(1), window.dataPoints[0].Count)
 	})
+}
+
+func TestSlidingWindow_toIndex(t *testing.T) {
+	// 5 second window, 1 second resolution
+	// add a datapoint for each second starting at -11 * time.Now()
+	// call toIndex with each datapoint
+	// assert that the index is correct
+	now := time.Now().Truncate(time.Second)
+	window := slidingWindow{
+		resolution: time.Second,
+		length:     time.Second * 5,
+		dataPoints: []DataPoint{
+			{Timestamp: now.Add(time.Second * -4), Count: 1}, // -4 to -3 interval
+			{Timestamp: now.Add(time.Second * -3), Count: 1}, // -3 to -2 interval
+			{Timestamp: now.Add(time.Second * -2), Count: 1}, // -2 to -1 interval
+			{Timestamp: now.Add(time.Second * -1), Count: 1}, // -1 to truncated interval
+			{Timestamp: now, Count: 1},                       // truncated at current second
+		},
+	}
+
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, i, window.toIndex(window.dataPoints[i], now))
+	}
 }
