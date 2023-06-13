@@ -21,7 +21,7 @@
     "@vue/compiler-sfc": "^3.3.4",
     "autoprefixer": "^10.4.14",
     "chai": "^4.3.7",
-    "chai-http": "^4.3.0",
+    "chai-http": "^4.4.0",
     "child-process": "^1.0.2",
     "css-loader": "^6.7.4",
     "eslint": "^8.42.0",
