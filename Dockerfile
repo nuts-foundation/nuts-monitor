@@ -12,7 +12,7 @@ RUN npm run dist
 #
 # Build backend
 #
-FROM golang:1.20.4-alpine as backend-builder
+FROM golang:1.20.5-alpine as backend-builder
 
 ARG TARGETARCH
 ARG TARGETOS
