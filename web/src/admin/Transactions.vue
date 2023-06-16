@@ -110,10 +110,9 @@ export default {
       const xScale = d3.scaleLinear(xDomain, xRange);
       const yScale = d3.scaleLinear(yDomain, yRange);
       const xFormat = d3.timeFormat(timeFormat);
-      const yFormat = d3.defaultFormat;
       const color = d3.scaleOrdinal(zDomain, d3.schemeTableau10);
       const xAxis = d3.axisBottom(xScale).tickFormat(xFormat).tickSizeOuter(0);
-      const yAxis = d3.axisLeft(yScale).ticks(height / 50, yFormat);
+      const yAxis = d3.axisLeft(yScale).ticks(height / 50);
 
       const area = d3.area()
           .x(({i}) => xScale(X[i]))

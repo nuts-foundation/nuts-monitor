@@ -31,6 +31,7 @@ import (
 	"nuts-foundation/nuts-monitor/data"
 	"os"
 	"path"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -60,13 +61,32 @@ func main() {
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", 1313)))
 }
 
-// loadHistory requests transactions from the Nuts node per 100 and stores them in the data store
+// loadHistory uses a Go routine to load the transactions in the background
+// On error it will retry every 10 seconds
 func loadHistory(store *data.Store, c config.Config) {
 	// initialize the client
 	client := client.HTTPClient{
 		Config: c,
 	}
 
+	go func() {
+		// As long there's no error, keep retrying
+		for {
+			err := loadHistoryOnce(store, client)
+			if err != nil {
+				log.Printf("failed to load historic transactions: %s", err)
+				log.Printf("retrying in 10 seconds")
+				// sleep for 10 seconds
+				<-time.After(10 * time.Second)
+			} else {
+				break
+			}
+		}
+	}()
+}
+
+// loadHistoryOnce loads the transactions from the Nuts node and stores them in the data store
+func loadHistoryOnce(store *data.Store, client client.HTTPClient) error {
 	// load the initial transactions
 	// ListTransactions per batch of 100, stop if the list is empty
 	// currentOffset is used to determine the offset for the next batch
@@ -74,7 +94,7 @@ func loadHistory(store *data.Store, c config.Config) {
 	for {
 		transactions, err := client.ListTransactions(context.Background(), currentOffset, currentOffset+100)
 		if err != nil {
-			log.Fatalf("failed to load historic transactions: %s", err)
+			return err
 		}
 		if len(transactions) == 0 {
 			break
@@ -90,6 +110,7 @@ func loadHistory(store *data.Store, c config.Config) {
 		// increase offset for next batch
 		currentOffset += 100
 	}
+	return nil
 }
 
 func newEchoServer(config config.Config, store *data.Store) *echo.Echo {

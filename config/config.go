@@ -38,7 +38,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const defaultPrefix = "NUTS_"
+const defaultPrefix = "NUTS"
 const defaultDelimiter = "."
 const configFileFlag = "configfile"
 const defaultConfigFile = "server.config.yaml"
@@ -63,6 +63,8 @@ type Config struct {
 	// NutsNodeAPIAudience dictates the aud field of the created JWT
 	NutsNodeAPIAudience string `kaonf:"nutsnodeapiaudience"`
 	ApiKey              crypto.Signer
+	// WithMockNode enables the mock Nuts node
+	WithMockNode bool `koanf:"withmocknode"`
 }
 
 func (c Config) Print(writer io.Writer) error {
@@ -97,15 +99,18 @@ func LoadConfig() Config {
 		log.Printf("Using default config because no file was found at: %s", configFilePath)
 	}
 
-	// load env flags, can't return error
-	_ = k.Load(envProvider(), nil)
-
 	config := defaultConfig()
 
 	// Unmarshal values of the config file into the config struct, potentially replacing default values
 	if err := k.Unmarshal("", &config); err != nil {
 		log.Fatalf("error while unmarshalling config: %v", err)
 	}
+
+	// load env flags, can't return error
+	_ = k.Load(envProvider(), nil)
+
+	// load cmd flags, without a parser, no error can be returned
+	_ = k.Load(posflag.Provider(flagset, defaultDelimiter, k), nil)
 
 	// Load the API key
 	if len(config.NutsNodeAPIKeyFile) > 0 {
@@ -125,11 +130,16 @@ func LoadConfig() Config {
 		}
 	}
 
+	if k.Bool("withmocknode") {
+		config.WithMockNode = true
+	}
+
 	return config
 }
 
 func loadFlagSet(args []string) *pflag.FlagSet {
 	f := pflag.NewFlagSet("config", pflag.ContinueOnError)
+	// add withmocknode flag
 	f.String(configFileFlag, defaultConfigFile, "Nuts monitor config file")
 	f.Usage = func() {
 		fmt.Println(f.FlagUsages())

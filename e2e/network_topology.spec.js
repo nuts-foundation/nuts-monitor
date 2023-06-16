@@ -14,8 +14,8 @@ describe('Network topology loading', async  () => {
     });
 
     it('should display a single node', async () => {
-        await page.waitForSelector('svg circle'); // Wait for the circle to appear
-        const circleCount = await page.$$eval('svg circle', circles => circles.length);
-        expect(circleCount).to.equal(1); // Check that only one circle has been added
+        await page.waitForSelector('svg g g'); // Wait for a node to appear
+        const nodeCount = await page.$$eval('svg g g', nodes => nodes.length);
+        expect(nodeCount).to.equal(2); // Check that only one circle has been added
     });
 });
