@@ -102,10 +102,14 @@ components:
         type: object
         description: "Data point"
         required:
+            - contentType
             - timestamp
             - label
             - value
         properties:
+          contentType:
+            type: string
+            description: "content type of the data point"
           timestamp:
             type: integer
             description: "time of the data point formatted as unix timestamp"

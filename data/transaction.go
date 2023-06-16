@@ -34,6 +34,8 @@ var ErrNoSigTime = errors.New("no sigt field")
 // Transaction represents a Nuts transaction.
 // It is parsed from a JWS token. It does not check the signature.
 type Transaction struct {
+	// ContentType is the content type of the transaction
+	ContentType string
 	// Signer is extracted from the key used to sign the transaction
 	Signer string
 	// SigTime is the signature time in seconds since the Unix epoch
@@ -57,6 +59,9 @@ func FromJWS(transaction string) (*Transaction, error) {
 	// parse the sigt string value to time field
 	sigTime := time.Unix(int64(sigt.(float64)), 0)
 
+	// then extract the Content-Type from the "cty" field
+	contentType := jwsToken.Signatures()[0].ProtectedHeaders().ContentType()
+
 	// the signer can either be extracted from the "kid" header or from the embedded key
 	// we first try to extract it from the "kid" header
 	signer, ok := jwsToken.Signatures()[0].ProtectedHeaders().Get("kid")
@@ -69,7 +74,7 @@ func FromJWS(transaction string) (*Transaction, error) {
 		if index == -1 {
 			return nil, ErrInvalidSigner
 		}
-		return &Transaction{Signer: signer.(string)[:index], SigTime: sigTime}, nil
+		return &Transaction{ContentType: contentType, Signer: signer.(string)[:index], SigTime: sigTime}, nil
 	}
 
 	// if the "kid" header is not present, we try to extract the signer from the embedded key
@@ -84,7 +89,7 @@ func FromJWS(transaction string) (*Transaction, error) {
 		if index == -1 {
 			return nil, ErrInvalidSigner
 		}
-		return &Transaction{Signer: kid[:index], SigTime: sigTime}, nil
+		return &Transaction{ContentType: contentType, Signer: kid[:index], SigTime: sigTime}, nil
 	}
 
 	return &Transaction{}, nil

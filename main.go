@@ -21,7 +21,10 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/nats-io/nats.go"
 	"io/fs"
 	"log"
 	"net/http"
@@ -51,7 +54,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	store := data.NewStore()
-	loadHistory(store, config)
+	// connect to the NATS stream of the nuts node
+	startConsumer(ctx, store, config)
+	// load history async
+	loadHistory(ctx, store, config)
+	// start shifting windows
 	store.Start(ctx)
 
 	// start the web server
@@ -63,7 +70,7 @@ func main() {
 
 // loadHistory uses a Go routine to load the transactions in the background
 // On error it will retry every 10 seconds
-func loadHistory(store *data.Store, c config.Config) {
+func loadHistory(context context.Context, store *data.Store, c config.Config) {
 	// initialize the client
 	client := client.HTTPClient{
 		Config: c,
@@ -73,13 +80,17 @@ func loadHistory(store *data.Store, c config.Config) {
 		// As long there's no error, keep retrying
 		for {
 			err := loadHistoryOnce(store, client)
-			if err != nil {
+			select {
+			case <-context.Done():
+				return
+			default:
+				if err == nil {
+					return
+				}
 				log.Printf("failed to load historic transactions: %s", err)
 				log.Printf("retrying in 10 seconds")
 				// sleep for 10 seconds
 				<-time.After(10 * time.Second)
-			} else {
-				break
 			}
 		}
 	}()
@@ -111,6 +122,97 @@ func loadHistoryOnce(store *data.Store, client client.HTTPClient) error {
 		currentOffset += 100
 	}
 	return nil
+}
+
+// startConsumer will try to subscribe to NATS every 10 seconds
+// it will retry until it succeeds
+func startConsumer(ctx context.Context, store *data.Store, c config.Config) {
+	go func() {
+		for {
+			err := startConsumerOnce(ctx, store, c)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err == nil {
+					return
+				}
+				log.Printf("failed to start NATS consumer: %s", err)
+				log.Printf("retrying in 10 seconds")
+				// sleep for 10 seconds
+				<-time.After(10 * time.Second)
+			}
+		}
+	}()
+}
+
+// startConsumerOnce starts the NATS consumer
+// it creates a non-durable subscription to the nuts node for the "nuts-disposable" stream
+// and stores the transactions in the data store
+func startConsumerOnce(ctx context.Context, store *data.Store, c config.Config) error {
+	// create a NATS connection
+	conn, err := nats.Connect(c.NutsNodeStreamAddr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to NATS stream: %w", err)
+	}
+	// setup NATS JetStream
+	js, err := conn.JetStream()
+	if err != nil {
+		return fmt.Errorf("failed to connect to JetStream: %w", err)
+	}
+
+	// stream creation
+	_, err = js.StreamInfo("nuts-monitor")
+	if errors.Is(err, nats.ErrStreamNotFound) {
+		_, err = js.AddStream(&nats.StreamConfig{
+			Name:      "nuts-monitor",
+			Subjects:  []string{"TRANSACTIONS.*"},
+			MaxMsgs:   1000, // max buffer
+			Retention: nats.LimitsPolicy,
+			Storage:   nats.MemoryStorage,
+			Discard:   nats.DiscardOld,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create stream: %w", err)
+		}
+	} else if err != nil {
+		return err
+	}
+
+	// Subscriber options
+	opts := []nats.SubOpt{
+		nats.BindStream("nuts-monitor"),
+		nats.DeliverNew(),
+		nats.Context(ctx),
+	}
+
+	// subscribe through JetStream
+	_, err = js.Subscribe("TRANSACTIONS.*", func(msg *nats.Msg) {
+		// parse the transaction, it's in JSON format
+		event := transactionEvent{}
+		err := json.Unmarshal(msg.Data, &event)
+		if err != nil {
+			log.Printf("failed to parse transaction event: %s", err)
+		}
+		transaction, err := data.FromJWS(event.Transaction)
+		if err != nil {
+			log.Printf("failed to parse transaction: %s", err)
+		}
+		// add transaction to store
+		store.Add(*transaction)
+	}, opts...)
+
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to stream: %w", err)
+	}
+	return nil
+}
+
+type transactionEvent struct {
+	// Transaction is in compacted JWS format
+	Transaction string `json:"transaction"`
+	// Payload is base64
+	Payload string `json:"payload"`
 }
 
 func newEchoServer(config config.Config, store *data.Store) *echo.Echo {
