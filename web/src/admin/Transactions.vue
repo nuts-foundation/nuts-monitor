@@ -19,7 +19,6 @@
       <hr class="border-gray-300 my-2">
 
     </div>
-    <router-view name="modal" @statusUpdate="updateStatus"></router-view>
   </div>
 </template>
 
@@ -35,17 +34,8 @@ export default {
       }
     }
   },
-  created () {
-    // watch the params of the route to fetch the data again
-    this.$watch(
-        () => this.$route.params,
-        () => {
-          this.fetchData()
-        },
-        // fetch the data when the view is created and the data is
-        // already being observed
-        { immediate: true }
-    )
+  mounted () {
+    this.fetchData()
   },
   emits: ['statusUpdate'],
   watch: {},
@@ -81,7 +71,7 @@ export default {
       // Compute values.
       const X = d3.map(data, (d) => new Date(d.timestamp * 1000));
       const Y = d3.map(data, (d) => d.value);
-      const Z = d3.map(data, () => 1);
+      const Z = d3.map(data, (d) => d.contentType);
 
       const xDomain = d3.extent(X);
       let zDomain = Z;
@@ -118,6 +108,9 @@ export default {
           .x(({i}) => xScale(X[i]))
           .y0(([y1]) => yScale(y1))
           .y1(([, y2]) => yScale(y2));
+
+      // clean up children of element first
+      d3.select(element).selectAll("*").remove();
 
       const svg = d3.select(element)
           .append("svg")

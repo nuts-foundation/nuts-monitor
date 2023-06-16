@@ -55,7 +55,7 @@ func (s *Store) Start(ctx context.Context) {
 func (s *Store) Add(transaction Transaction) {
 	// first add the transaction to the sliding windows
 	for i := range s.slidingWindows {
-		s.slidingWindows[i].AddCount(transaction.SigTime)
+		s.slidingWindows[i].AddCount(transaction.ContentType, transaction.SigTime)
 	}
 
 	// todo: resolve the controller of the signer
@@ -63,11 +63,14 @@ func (s *Store) Add(transaction Transaction) {
 
 // GetTransactions returns the transactions of the sliding windows
 // The smallest resolution is first, the largest resolution is last
-func (s *Store) GetTransactions() [3][]DataPoint {
-	var transactions [3][]DataPoint
+func (s *Store) GetTransactions() [3]map[string][]DataPoint {
+	var transactions [3]map[string][]DataPoint
 
 	for i, window := range s.slidingWindows {
-		transactions[i] = window.dataPoints
+		transactions[i] = map[string][]DataPoint{}
+		for cty, a := range window.dataPoints {
+			transactions[i][cty] = a
+		}
 	}
 
 	return transactions

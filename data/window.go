@@ -34,7 +34,7 @@ type slidingWindow struct {
 	length           time.Duration
 	evictionInterval time.Duration
 	mutex            sync.Mutex
-	dataPoints       []DataPoint
+	dataPoints       map[string][]DataPoint
 	clockdrift       time.Duration
 }
 
@@ -43,7 +43,7 @@ func NewSlidingWindow(resolution, length, evictionInterval time.Duration) *slidi
 		resolution:       resolution,
 		length:           length,
 		evictionInterval: evictionInterval,
-		dataPoints:       []DataPoint{},
+		dataPoints:       map[string][]DataPoint{},
 		clockdrift:       5 * time.Second,
 	}
 
@@ -78,24 +78,25 @@ func (s *slidingWindow) maxLength() int {
 
 // slide removes dataPoints older than length
 func (s *slidingWindow) slide(now time.Time) {
-
-	cutoff := -1
-	for j := len(s.dataPoints) - 1; j >= 0; j-- {
-		if s.dataPoints[j].Timestamp.Before(now.Add(-s.length).Add(time.Nanosecond)) {
-			cutoff = j + 1
-			break
+	for cty, a := range s.dataPoints {
+		cutoff := -1
+		for j := len(a) - 1; j >= 0; j-- {
+			if a[j].Timestamp.Before(now.Add(-s.length).Add(time.Nanosecond)) {
+				cutoff = j + 1
+				break
+			}
 		}
-	}
 
-	if cutoff == -1 {
-		return
-	}
+		if cutoff == -1 {
+			return
+		}
 
-	s.dataPoints = s.dataPoints[cutoff:]
+		s.dataPoints[cty] = a[cutoff:]
+	}
 }
 
 // AddCount adds +1 to the DataPoint at the correct moment
-func (s *slidingWindow) AddCount(at time.Time) {
+func (s *slidingWindow) AddCount(txType string, at time.Time) {
 	// first we apply the clockdrift
 	at = at.Add(-1 * s.clockdrift)
 
@@ -112,15 +113,19 @@ func (s *slidingWindow) AddCount(at time.Time) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	for i, dataPoint := range s.dataPoints {
+	if _, ok := s.dataPoints[txType]; !ok {
+		s.dataPoints[txType] = []DataPoint{}
+	}
+
+	for i, dataPoint := range s.dataPoints[txType] {
 		if dataPoint.Timestamp.Equal(at) {
-			s.dataPoints[i].Count++
+			s.dataPoints[txType][i].Count++
 			return
 		}
 	}
 
 	// no DataPoint found, create a new one
-	s.dataPoints = append(s.dataPoints, DataPoint{
+	s.dataPoints[txType] = append(s.dataPoints[txType], DataPoint{
 		Timestamp: at,
 		Count:     1,
 	})
@@ -140,27 +145,29 @@ func (s *slidingWindow) consolidate() {
 
 	s.slide(now)
 
-	// first create a new slice with maxLen
-	newDataPoints := make([]DataPoint, s.maxLength())
+	for cty, slice := range s.dataPoints {
+		// first create a new slice with maxLen
+		newDataPoints := make([]DataPoint, s.maxLength())
 
-	// prefill the new slice with DataPoints
-	for i := len(newDataPoints) - 1; i >= 0; i-- {
-		newDataPoints[i] = DataPoint{
-			Timestamp: now.Add(time.Duration(i-len(newDataPoints)+1) * s.resolution),
-			Count:     0,
+		// prefill the new slice with DataPoints
+		for i := len(newDataPoints) - 1; i >= 0; i-- {
+			newDataPoints[i] = DataPoint{
+				Timestamp: now.Add(time.Duration(i-len(newDataPoints)+1) * s.resolution),
+				Count:     0,
+			}
 		}
-	}
 
-	// then loop over the current dataPoints and add the count from those points to the correct new DataPoint
-	for _, dataPoint := range s.dataPoints {
-		index := s.toIndex(dataPoint, now)
-		if index < len(newDataPoints) { // huge clockdrift can cause this, so ignore it
-			newDataPoints[index].Count += dataPoint.Count
+		// then loop over the current dataPoints and add the count from those points to the correct new DataPoint
+		for _, dataPoint := range slice {
+			index := s.toIndex(dataPoint, now)
+			if index < len(newDataPoints) && index >= 0 { // huge clockdrift can cause this, so ignore it
+				newDataPoints[index].Count += dataPoint.Count
+			}
 		}
-	}
 
-	// set the new dataPoints
-	s.dataPoints = newDataPoints
+		// set the new dataPoints
+		s.dataPoints[cty] = newDataPoints
+	}
 }
 
 // toIndex converts a datapoint to an index in the dataPoints slice

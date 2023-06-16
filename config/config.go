@@ -43,16 +43,20 @@ const defaultDelimiter = "."
 const configFileFlag = "configfile"
 const defaultConfigFile = "server.config.yaml"
 const defaultNutsNodeAddress = "http://localhost:1323"
+const defaultNutsNodeStreamAddress = "nats://localhost:4222"
 
 func defaultConfig() Config {
 	return Config{
-		NutsNodeAddr: defaultNutsNodeAddress,
+		NutsNodeAddr:       defaultNutsNodeAddress,
+		NutsNodeStreamAddr: defaultNutsNodeStreamAddress,
 	}
 }
 
 type Config struct {
 	// NutsNodeAddr contains the address of the Nuts node. It's also used in the aud field when API security is enabled
 	NutsNodeAddr string `koanf:"nutsnodeaddr"`
+	// NutsNodeStreamAddr contains the NATS address of the Nuts node.
+	NutsNodeStreamAddr string `koanf:"nutsnodestreamaddr"`
 	// NutsNodeInternalAddr contains the address of the Nuts node for calls to /internal endpoints, in case these are bound to a separate HTTP interface.
 	// If empty, NutsNodeAddr is used.
 	NutsNodeInternalAddr string `koanf:"nutsnodeinternaladdr"`

@@ -101,7 +101,7 @@ func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestOb
 	return NetworkTopology200JSONResponse(networkTopology), nil
 }
 
-func (w Wrapper) GetWebTransactionsAggregated(ctx context.Context, _ GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error) {
+func (w Wrapper) GetWebTransactionsAggregated(_ context.Context, _ GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error) {
 	// get data from the store
 	dataPoints := w.DataStore.GetTransactions()
 
@@ -109,23 +109,30 @@ func (w Wrapper) GetWebTransactionsAggregated(ctx context.Context, _ GetWebTrans
 	response := AggregatedTransactions{}
 	// loop over the 3 categories of data points
 	// for each category, loop over the data points and add them to the correct category in the response object
-	for _, dp := range dataPoints[0] {
-		response.Hourly = append(response.Hourly, toDataPoint(dp))
+	for cty, dp := range dataPoints[0] {
+		for _, a := range dp {
+			response.Hourly = append(response.Hourly, toDataPoint(cty, a))
+		}
 	}
-	for _, dp := range dataPoints[1] {
-		response.Daily = append(response.Daily, toDataPoint(dp))
+	for cty, dp := range dataPoints[1] {
+		for _, a := range dp {
+			response.Daily = append(response.Daily, toDataPoint(cty, a))
+		}
 	}
-	for _, dp := range dataPoints[2] {
-		response.Monthly = append(response.Monthly, toDataPoint(dp))
+	for cty, dp := range dataPoints[2] {
+		for _, a := range dp {
+			response.Monthly = append(response.Monthly, toDataPoint(cty, a))
+		}
 	}
 
 	return GetWebTransactionsAggregated200JSONResponse(response), nil
 }
 
-func toDataPoint(dp data.DataPoint) DataPoint {
+func toDataPoint(cty string, dp data.DataPoint) DataPoint {
 	return DataPoint{
-		Timestamp: int(dp.Timestamp.Unix()),
-		Label:     dp.Timestamp.Format(time.RFC3339),
-		Value:     int(dp.Count),
+		ContentType: cty,
+		Timestamp:   int(dp.Timestamp.Unix()),
+		Label:       dp.Timestamp.Format(time.RFC3339),
+		Value:       int(dp.Count),
 	}
 }
