@@ -230,11 +230,23 @@ components:
           type: integer
           description: "number of root DIDs in the network"
         transactions_per_root:
-          type: object
-          description: "number of transactions per root DID. Map of DID to count"
-          additionalProperties:
+          type: array
+          description: "number of transactions per root DID."
+          items:
+            $ref: "#/components/schemas/TransactionsPerRoot"
+    TransactionsPerRoot:
+      type: object
+      description: "number of transactions per root DID."
+      required:
+        - did
+        - count
+      properties:
+        did:
+            type: string
+            description: "root DID"
+        count:
             type: integer
-            description: "number of transactions for the given root"
+            description: "number of transactions for the root DID"
     VCR:
       type: object
       description: "key numbers on credentials"

@@ -24,6 +24,7 @@ import (
 	"nuts-foundation/nuts-monitor/client/diagnostics"
 	"nuts-foundation/nuts-monitor/config"
 	"nuts-foundation/nuts-monitor/data"
+	"sort"
 	"time"
 )
 
@@ -101,12 +102,16 @@ func (w Wrapper) NetworkTopology(ctx context.Context, _ NetworkTopologyRequestOb
 	return NetworkTopology200JSONResponse(networkTopology), nil
 }
 
-func (w Wrapper) GetWebTransactionsAggregated(_ context.Context, _ GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error) {
+func (w Wrapper) AggregatedTransactions(_ context.Context, _ AggregatedTransactionsRequestObject) (AggregatedTransactionsResponseObject, error) {
 	// get data from the store
 	dataPoints := w.DataStore.GetTransactions()
 
 	// convert the data points to the response object
-	response := AggregatedTransactions{}
+	response := AggregatedTransactions{
+		Hourly:  make([]DataPoint, 0),
+		Daily:   make([]DataPoint, 0),
+		Monthly: make([]DataPoint, 0),
+	}
 	// loop over the 3 categories of data points
 	// for each category, loop over the data points and add them to the correct category in the response object
 	for cty, dp := range dataPoints[0] {
@@ -125,7 +130,42 @@ func (w Wrapper) GetWebTransactionsAggregated(_ context.Context, _ GetWebTransac
 		}
 	}
 
-	return GetWebTransactionsAggregated200JSONResponse(response), nil
+	return AggregatedTransactions200JSONResponse(response), nil
+}
+
+func (w Wrapper) TransactionCounts(_ context.Context, _ TransactionCountsRequestObject) (TransactionCountsResponseObject, error) {
+	// get counts from the store
+	mapping, count := w.DataStore.GetTransactionCounts()
+
+	// create the basic response object
+	response := TransactionCounts200JSONResponse{
+		RootCount: int(count),
+	}
+
+	// loop over the mapping and place each entry in a tuple, then sort the tuples on count descending and take the top 10
+	// then add the top 10 to the response object
+	type tuple struct {
+		count int
+		did   string
+	}
+	var tuples []tuple
+	for k, v := range mapping {
+		tuples = append(tuples, tuple{
+			count: int(v),
+			did:   k,
+		})
+	}
+	sort.Slice(tuples, func(i, j int) bool {
+		return tuples[i].count > tuples[j].count
+	})
+
+	for i := 0; i < 10 && i < len(tuples); i++ {
+		response.TransactionsPerRoot = append(response.TransactionsPerRoot, TransactionsPerRoot{
+			Did:   tuples[i].did,
+			Count: tuples[i].count,
+		})
+	}
+	return response, nil
 }
 
 func toDataPoint(cty string, dp data.DataPoint) DataPoint {

@@ -20,8 +20,6 @@ package data
 
 import (
 	"context"
-	"encoding/json"
-	"github.com/nuts-foundation/go-did/did"
 	"log"
 	"nuts-foundation/nuts-monitor/client"
 	"time"
@@ -69,10 +67,16 @@ func (s *Store) Add(transaction Transaction) {
 		s.slidingWindows[i].AddCount(transaction.ContentType, transaction.SigTime)
 	}
 
-	controller := s.resolveController(transaction.Signer)
-	if controller == transaction.Signer {
+	controller, newRoot := s.resolveController(transaction.Signer)
+	if newRoot {
 		// a new root so add it to the count
 		s.rootDIDCount++
+	}
+	// check if controller already in didCount. If not add an entry with 1 otherwise increment the count
+	if _, ok := s.didCount[controller]; !ok {
+		s.didCount[controller] = 1
+	} else {
+		s.didCount[controller]++
 	}
 }
 
@@ -96,10 +100,10 @@ func (s *Store) GetTransactionCounts() (map[string]uint32, uint32) {
 	return s.didCount, s.rootDIDCount
 }
 
-func (s *Store) resolveController(txDID string) string {
+func (s *Store) resolveController(txDID string) (string, bool) {
 	// check if the did is already resolved
 	if controller, ok := s.mapping[txDID]; ok {
-		return controller
+		return controller, false
 	}
 
 	// resolve the did
@@ -107,27 +111,22 @@ func (s *Store) resolveController(txDID string) string {
 	if err != nil {
 		// resolving failed, just return the original did
 		log.Printf("error resolving did: %s\n", err.Error())
-		return txDID
+		return txDID, true
 	}
 
-	// marshal the document to json and then to a go-did DIDDocument
-	// this is needed to cast the controller to the right structure
-	j, _ := json.Marshal(result.Document)
-	didDocument := did.Document{}
-	_ = json.Unmarshal(j, &didDocument)
-
 	root := txDID
+	newRoot := true
 
 	// check if the DID document contains a controller that differs from the did
-	for _, controller := range didDocument.Controller {
+	for _, controller := range result.Document.Controller {
 		if controller.String() != txDID {
 			// call resolveController recursively to resolve the controller of the controller
-			root = s.resolveController(controller.String())
+			root, newRoot = s.resolveController(controller.String())
 			break
 		}
 	}
 	// add the mapping to the store
 	s.mapping[txDID] = root
 
-	return root
+	return root, newRoot
 }

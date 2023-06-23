@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="my-2">
-      <div class="text-xl font-semibold text-gray-700 mb-2">Network</div>
+      <div class="text-xl font-semibold text-gray-700 mb-2">Transactions</div>
       <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="bg-white shadow rounded-lg p-4">
           <div class="font-semibold text-gray-700 mb-2">Last hour</div>
@@ -17,7 +17,13 @@
         </div>
       </div>
       <hr class="border-gray-300 my-2">
-
+      <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
+        <div class="bg-white shadow rounded-lg p-4">
+          <div class="font-semibold text-gray-700 mb-2">Top 10</div>
+          <div id="viz_top"></div>
+          <div class="font-semibold text-gray-700 mb-2">Roots: {{transactionsByDID.root_count}}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -31,7 +37,8 @@ export default {
         'hourly': [],
         'daily': [],
         'monthly': []
-      }
+      },
+      'transactionsByDID': {}
     }
   },
   mounted () {
@@ -54,11 +61,88 @@ export default {
           .catch(reason => {
             console.log('error while fetching data: ', reason)
           })
+
+      this.$api.get('web/transactions/counts')
+          .then(responseData => {
+            this.transactionsByDID = responseData
+            this.updateTop10(responseData['transactions_per_root'])
+          })
+          .catch(reason => {
+            console.log('error while fetching data: ', reason)
+          })
     },
     updateGraphs(responseData) {
       this.updateGraph('#viz_hour', responseData.hourly, '%H:%M')
       this.updateGraph('#viz_day', responseData.daily, '%H:%M')
       this.updateGraph('#viz_month', responseData.monthly,'%m-%d')
+    },
+    updateTop10(responseData) {
+      console.log('updateTop10', responseData)
+
+      // Specify the chart’s dimensions, based on a bar’s height.
+      const barHeight = 25;
+      const marginTop = 30;
+      const marginRight = 0;
+      const marginBottom = 10;
+      const marginLeft = 350;
+      const width = 1000;
+      const height = Math.ceil((10 + 0.1) * barHeight) + marginTop + marginBottom;
+
+      // Create the scales.
+      const x = d3.scaleLinear()
+          .domain([0, d3.max(responseData, d => d.count)])
+          .range([marginLeft, width - marginRight]);
+
+      const y = d3.scaleBand()
+          .domain(d3.sort(responseData, d => -d.count).map(d => d.did))
+          .rangeRound([marginTop, height - marginBottom])
+          .padding(0.1);
+
+      // Create the SVG container.
+      const svg = d3.select("#viz_top")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .attr("viewBox", [0, 0, width, height])
+          .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
+
+      // Append a rect for each letter.
+      svg.append("g")
+          .attr("fill", "steelblue")
+          .selectAll()
+          .data(responseData)
+          .join("rect")
+          .attr("x", x(0))
+          .attr("y", (d) => y(d.did))
+          .attr("width", (d) => x(d.count) - x(0))
+          .attr("height", y.bandwidth());
+
+      // Append a label for each letter.
+      svg.append("g")
+          .attr("fill", "white")
+          .attr("text-anchor", "end")
+          .selectAll()
+          .data(responseData)
+          .join("text")
+          .attr("x", (d) => x(d.count))
+          .attr("y", (d) => y(d.did) + y.bandwidth() / 2)
+          .attr("dy", "0.35em")
+          .attr("dx", -4)
+          .text((d) => d.count)
+          .call((text) => text.filter(d => x(d.count) - x(0) < 20) // short bars
+              .attr("dx", +4)
+              .attr("fill", "black")
+              .attr("text-anchor", "start"));
+
+      // Create the axes.
+      svg.append("g")
+          .attr("transform", `translate(0,${marginTop})`)
+          .call(d3.axisTop(x))
+          .call(g => g.select(".domain").remove());
+
+      svg.append("g")
+          .attr("transform", `translate(${marginLeft},0)`)
+          .call(d3.axisLeft(y).tickSizeOuter(0));
     },
     updateGraph(element, data, timeFormat) {
       console.log('updateGraph', element, data)
