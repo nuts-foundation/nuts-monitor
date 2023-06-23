@@ -20,6 +20,10 @@ package data
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/nuts-foundation/go-did/did"
+	"log"
+	"nuts-foundation/nuts-monitor/client"
 	"time"
 )
 
@@ -27,13 +31,20 @@ import (
 // It also contains three sliding windows with length and resolution of: (1 hour, 1 minute), (1 day, 1 hour), (30 days, 1 day).
 // A transaction can be added, the store will resolve the signer and the controller of the signer.
 type Store struct {
+	client         client.HTTPClient
 	mapping        map[string]string
 	slidingWindows []*slidingWindow
+	didCount       map[string]uint32
+	// rootDIDCount is the number of unique root DIDs, we can't use the length of the mapping because
+	// the mapping may contain multiple levels of mapping before getting to the root DID
+	rootDIDCount uint32
 }
 
-func NewStore() *Store {
+func NewStore(client client.HTTPClient) *Store {
 	s := &Store{
-		mapping: make(map[string]string),
+		client:   client,
+		mapping:  make(map[string]string),
+		didCount: make(map[string]uint32),
 	}
 
 	// initialize all windows with empty dataPoints using the init function
@@ -44,7 +55,7 @@ func NewStore() *Store {
 	return s
 }
 
-// Start starts the sliding windows
+// Start the sliding windows
 func (s *Store) Start(ctx context.Context) {
 	for i := range s.slidingWindows {
 		s.slidingWindows[i].Start(ctx)
@@ -58,7 +69,11 @@ func (s *Store) Add(transaction Transaction) {
 		s.slidingWindows[i].AddCount(transaction.ContentType, transaction.SigTime)
 	}
 
-	// todo: resolve the controller of the signer
+	controller := s.resolveController(transaction.Signer)
+	if controller == transaction.Signer {
+		// a new root so add it to the count
+		s.rootDIDCount++
+	}
 }
 
 // GetTransactions returns the transactions of the sliding windows
@@ -74,4 +89,45 @@ func (s *Store) GetTransactions() [3]map[string][]DataPoint {
 	}
 
 	return transactions
+}
+
+// GetTransactionCounts returns the transaction count per root DID and the total number of roots
+func (s *Store) GetTransactionCounts() (map[string]uint32, uint32) {
+	return s.didCount, s.rootDIDCount
+}
+
+func (s *Store) resolveController(txDID string) string {
+	// check if the did is already resolved
+	if controller, ok := s.mapping[txDID]; ok {
+		return controller
+	}
+
+	// resolve the did
+	result, err := s.client.DIDDocument(context.Background(), txDID)
+	if err != nil {
+		// resolving failed, just return the original did
+		log.Printf("error resolving did: %s\n", err.Error())
+		return txDID
+	}
+
+	// marshal the document to json and then to a go-did DIDDocument
+	// this is needed to cast the controller to the right structure
+	j, _ := json.Marshal(result.Document)
+	didDocument := did.Document{}
+	_ = json.Unmarshal(j, &didDocument)
+
+	root := txDID
+
+	// check if the DID document contains a controller that differs from the did
+	for _, controller := range didDocument.Controller {
+		if controller.String() != txDID {
+			// call resolveController recursively to resolve the controller of the controller
+			root = s.resolveController(controller.String())
+			break
+		}
+	}
+	// add the mapping to the store
+	s.mapping[txDID] = root
+
+	return root
 }

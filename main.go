@@ -50,10 +50,15 @@ func main() {
 	config := config.LoadConfig()
 	config.Print(log.Writer())
 
+	// create the Node API Client
+	client := client.HTTPClient{
+		Config: config,
+	}
+
 	// then initialize the data storage and fill it with the initial transactions
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	store := data.NewStore()
+	store := data.NewStore(client)
 	// connect to the NATS stream of the nuts node
 	startConsumer(ctx, store, config)
 	// load history async
