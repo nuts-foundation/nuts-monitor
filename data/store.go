@@ -72,12 +72,7 @@ func (s *Store) Add(transaction Transaction) {
 		// a new root so add it to the count
 		s.rootDIDCount++
 	}
-	// check if controller already in didCount. If not add an entry with 1 otherwise increment the count
-	if _, ok := s.didCount[controller]; !ok {
-		s.didCount[controller] = 1
-	} else {
-		s.didCount[controller]++
-	}
+	s.didCount[controller]++
 }
 
 // GetTransactions returns the transactions of the sliding windows
