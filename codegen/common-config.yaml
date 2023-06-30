@@ -3,3 +3,5 @@ generate:
   models: true
 output-options:
   skip-prune: true
+  exclude-schemas:
+    - DIDDocument

@@ -87,6 +87,24 @@ type Status struct {
 	Uptime float32 `json:"uptime"`
 }
 
+// TransactionCounts Transaction counts
+type TransactionCounts struct {
+	// RootCount number of root DIDs in the network
+	RootCount int `json:"root_count"`
+
+	// TransactionsPerRoot number of transactions per root DID.
+	TransactionsPerRoot []TransactionsPerRoot `json:"transactions_per_root"`
+}
+
+// TransactionsPerRoot number of transactions per root DID.
+type TransactionsPerRoot struct {
+	// Count number of transactions for the root DID
+	Count int `json:"count"`
+
+	// Did root DID
+	Did string `json:"did"`
+}
+
 // VCR key numbers on credentials
 type VCR struct {
 	// CredentialCount total number of observed credentials
@@ -134,7 +152,10 @@ type ServerInterface interface {
 	NetworkTopology(ctx echo.Context) error
 	// Returns the transactions aggregated by time
 	// (GET /web/transactions/aggregated)
-	GetWebTransactionsAggregated(ctx echo.Context) error
+	AggregatedTransactions(ctx echo.Context) error
+	// Return the number of transactions per node and total known nodes
+	// (GET /web/transactions/counts)
+	TransactionCounts(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -169,12 +190,21 @@ func (w *ServerInterfaceWrapper) NetworkTopology(ctx echo.Context) error {
 	return err
 }
 
-// GetWebTransactionsAggregated converts echo context to params.
-func (w *ServerInterfaceWrapper) GetWebTransactionsAggregated(ctx echo.Context) error {
+// AggregatedTransactions converts echo context to params.
+func (w *ServerInterfaceWrapper) AggregatedTransactions(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetWebTransactionsAggregated(ctx)
+	err = w.Handler.AggregatedTransactions(ctx)
+	return err
+}
+
+// TransactionCounts converts echo context to params.
+func (w *ServerInterfaceWrapper) TransactionCounts(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.TransactionCounts(ctx)
 	return err
 }
 
@@ -209,7 +239,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/health", wrapper.CheckHealth)
 	router.GET(baseURL+"/web/diagnostics", wrapper.Diagnostics)
 	router.GET(baseURL+"/web/network_topology", wrapper.NetworkTopology)
-	router.GET(baseURL+"/web/transactions/aggregated", wrapper.GetWebTransactionsAggregated)
+	router.GET(baseURL+"/web/transactions/aggregated", wrapper.AggregatedTransactions)
+	router.GET(baseURL+"/web/transactions/counts", wrapper.TransactionCounts)
 
 }
 
@@ -270,16 +301,32 @@ func (response NetworkTopology200JSONResponse) VisitNetworkTopologyResponse(w ht
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetWebTransactionsAggregatedRequestObject struct {
+type AggregatedTransactionsRequestObject struct {
 }
 
-type GetWebTransactionsAggregatedResponseObject interface {
-	VisitGetWebTransactionsAggregatedResponse(w http.ResponseWriter) error
+type AggregatedTransactionsResponseObject interface {
+	VisitAggregatedTransactionsResponse(w http.ResponseWriter) error
 }
 
-type GetWebTransactionsAggregated200JSONResponse AggregatedTransactions
+type AggregatedTransactions200JSONResponse AggregatedTransactions
 
-func (response GetWebTransactionsAggregated200JSONResponse) VisitGetWebTransactionsAggregatedResponse(w http.ResponseWriter) error {
+func (response AggregatedTransactions200JSONResponse) VisitAggregatedTransactionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TransactionCountsRequestObject struct {
+}
+
+type TransactionCountsResponseObject interface {
+	VisitTransactionCountsResponse(w http.ResponseWriter) error
+}
+
+type TransactionCounts200JSONResponse TransactionCounts
+
+func (response TransactionCounts200JSONResponse) VisitTransactionCountsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
@@ -299,7 +346,10 @@ type StrictServerInterface interface {
 	NetworkTopology(ctx context.Context, request NetworkTopologyRequestObject) (NetworkTopologyResponseObject, error)
 	// Returns the transactions aggregated by time
 	// (GET /web/transactions/aggregated)
-	GetWebTransactionsAggregated(ctx context.Context, request GetWebTransactionsAggregatedRequestObject) (GetWebTransactionsAggregatedResponseObject, error)
+	AggregatedTransactions(ctx context.Context, request AggregatedTransactionsRequestObject) (AggregatedTransactionsResponseObject, error)
+	// Return the number of transactions per node and total known nodes
+	// (GET /web/transactions/counts)
+	TransactionCounts(ctx context.Context, request TransactionCountsRequestObject) (TransactionCountsResponseObject, error)
 }
 
 type StrictHandlerFunc = runtime.StrictEchoHandlerFunc
@@ -383,23 +433,46 @@ func (sh *strictHandler) NetworkTopology(ctx echo.Context) error {
 	return nil
 }
 
-// GetWebTransactionsAggregated operation middleware
-func (sh *strictHandler) GetWebTransactionsAggregated(ctx echo.Context) error {
-	var request GetWebTransactionsAggregatedRequestObject
+// AggregatedTransactions operation middleware
+func (sh *strictHandler) AggregatedTransactions(ctx echo.Context) error {
+	var request AggregatedTransactionsRequestObject
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetWebTransactionsAggregated(ctx.Request().Context(), request.(GetWebTransactionsAggregatedRequestObject))
+		return sh.ssi.AggregatedTransactions(ctx.Request().Context(), request.(AggregatedTransactionsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetWebTransactionsAggregated")
+		handler = middleware(handler, "AggregatedTransactions")
 	}
 
 	response, err := handler(ctx, request)
 
 	if err != nil {
 		return err
-	} else if validResponse, ok := response.(GetWebTransactionsAggregatedResponseObject); ok {
-		return validResponse.VisitGetWebTransactionsAggregatedResponse(ctx.Response())
+	} else if validResponse, ok := response.(AggregatedTransactionsResponseObject); ok {
+		return validResponse.VisitAggregatedTransactionsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// TransactionCounts operation middleware
+func (sh *strictHandler) TransactionCounts(ctx echo.Context) error {
+	var request TransactionCountsRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TransactionCounts(ctx.Request().Context(), request.(TransactionCountsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransactionCounts")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TransactionCountsResponseObject); ok {
+		return validResponse.VisitTransactionCountsResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("Unexpected response type: %T", response)
 	}

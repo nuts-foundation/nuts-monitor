@@ -52,7 +52,7 @@ paths:
         - an interval of 1 hour with a resolution of 1 minute
         - an interval of 1 day with a resolution of 1 hour
         - an interval of 1 month with a resolution of 1 day
-        operationId: aggregatedTransactions
+      operationId: aggregatedTransactions
       responses:
           200:
             description: "Aggregated transactions data"
@@ -60,6 +60,23 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/AggregatedTransactions"
+  /web/transactions/counts:
+    get:
+      summary: "Return the number of transactions per node and total known nodes"
+      description: >
+        Returns the number of transactions per node and total known nodes.
+        The concept of a node is a root DID, so a DID without controllers.
+        This does not match the definition of a node, given a node can create multiple root DIDs.
+        But normal operation limits the number of root DIDs to one per node.
+        It only returns the top 10 roots.
+      operationId: transactionCounts
+      responses:
+        200:
+          description: "Transaction counts"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionCounts"
 components:
   schemas:
     AggregatedTransactions:
@@ -202,6 +219,34 @@ components:
         uptime:
           type: number
           description: "Nanoseconds of uptime"
+    TransactionCounts:
+      type: object
+      description: "Transaction counts"
+      required:
+        - root_count
+        - transactions_per_root
+      properties:
+        root_count:
+          type: integer
+          description: "number of root DIDs in the network"
+        transactions_per_root:
+          type: array
+          description: "number of transactions per root DID."
+          items:
+            $ref: "#/components/schemas/TransactionsPerRoot"
+    TransactionsPerRoot:
+      type: object
+      description: "number of transactions per root DID."
+      required:
+        - did
+        - count
+      properties:
+        did:
+            type: string
+            description: "root DID"
+        count:
+            type: integer
+            description: "number of transactions for the root DID"
     VCR:
       type: object
       description: "key numbers on credentials"
