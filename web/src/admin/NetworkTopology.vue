@@ -121,7 +121,7 @@ export default {
 <li><label for="peer_id">NodeDID:</label><span id="peer_id">${d.data.raw.node_did}</span></li>
 <li><label for="peer_id">Certificate:</label><span id="peer_id">${d.data.raw.cn}</span></li>
 <li><label for="peer_id">Contact name:</label><span id="peer_id">${d.data.raw.contact_name}</span></li>
-<li><label for="peer_id">Contacte phone:</label><span id="peer_id">${d.data.raw.contact_phone}</span></li>
+<li><label for="peer_id">Contact phone:</label><span id="peer_id">${d.data.raw.contact_phone}</span></li>
 <li><label for="peer_id">Contact email:</label><span id="peer_id">${d.data.raw.contact_email}</span></li>
 <li><label for="peer_id">Contact webaddress:</label><span id="peer_id">${d.data.raw.contact_web}</span></li>
 <li><label for="peer_id">Software ID:</label><span id="peer_id">${d.data.raw.software_id}</span></li>

@@ -72,6 +72,15 @@ type EventSubscriber struct {
 
 // PeerDiagnostics Diagnostic information of a peer.
 type PeerDiagnostics struct {
+	// Address Peer's address. This is an IP if it is an inbound connection.
+	Address *string `json:"address,omitempty"`
+
+	// Certificate Peer's Certificate
+	Certificate *string `json:"certificate,omitempty"`
+
+	// NodeDID Peer's NodeDID
+	NodeDID *string `json:"nodeDID,omitempty"`
+
 	// Peers IDs of the peer's peers.
 	Peers *[]string `json:"peers,omitempty"`
 

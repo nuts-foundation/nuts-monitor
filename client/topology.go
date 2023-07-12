@@ -20,16 +20,16 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"github.com/nuts-foundation/go-did/did"
 	"github.com/sirupsen/logrus"
-	"net"
+	"nuts-foundation/nuts-monitor/client/vdr"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/nuts-foundation/go-did/did"
-	"nuts-foundation/nuts-monitor/client/vdr"
 )
 
 // NetworkTopology holds vertices and edges, also used in webAPI
@@ -120,6 +120,7 @@ func (ts TopologyService) NetworkTopology(ctx context.Context) (NetworkTopology,
 		return networkTopology, err
 	}
 
+	var certificate *x509.Certificate
 	for k, v := range peerDiagnostics {
 		peerID := realPeerID(k)
 		peer, ok := existingPeer(networkTopology.Peers, peerID)
@@ -131,6 +132,14 @@ func (ts TopologyService) NetworkTopology(ctx context.Context) (NetworkTopology,
 		}
 		if v.SoftwareID != nil {
 			peer.SoftwareID = *v.SoftwareID
+		}
+		if v.Certificate != nil {
+			certificate, err = parsePEMCertificate([]byte(*v.Certificate))
+			if err != nil {
+				logrus.Errorf("failed to parse certificate for PeerID=%s: %v", peerID, err)
+				continue
+			}
+			peer.CN = certificate.Subject.String()
 		}
 		if !ok {
 			networkTopology.Peers = append(networkTopology.Peers, *peer)
@@ -181,27 +190,6 @@ func (ts TopologyService) addInfoToPeers(ctx context.Context, peers []Peer) {
 					peer.ContactEmail = nodeContactInfo.Email
 					peer.ContactWeb = nodeContactInfo.Web
 					peer.ContactPhone = nodeContactInfo.Phone
-
-					nutsComm, err := extractNutsCommAddress(document.Document)
-					if err != nil {
-						logrus.Errorf("failed to extract NutsComm address from DID Document: %v", err)
-					} else {
-						wgTLS.Add(1)
-						go func(peer *Peer) {
-							dialer := net.Dialer{Timeout: 2 * time.Second}
-							conn, err := tls.DialWithDialer(&dialer, "tcp", nutsComm, &tls.Config{InsecureSkipVerify: true})
-							if err != nil {
-								logrus.Errorf("failed to connect over TCP to %s: %v", nutsComm, err)
-							} else {
-								peerCerts := conn.ConnectionState().PeerCertificates
-								if len(peerCerts) > 0 {
-									peer.CN = conn.ConnectionState().PeerCertificates[0].Subject.String()
-								}
-								_ = conn.Close()
-							}
-							wgTLS.Done()
-						}(peer)
-					}
 				}
 				wgDocument.Done()
 			}(&peers[i])
@@ -211,16 +199,29 @@ func (ts TopologyService) addInfoToPeers(ctx context.Context, peers []Peer) {
 	wgTLS.Wait()
 }
 
-func extractNutsCommAddress(document vdr.DIDDocument) (string, error) {
-	asJSON, _ := json.Marshal(document)
-	asGoDID := did.Document{}
-	_ = json.Unmarshal(asJSON, &asGoDID)
+// parsePEMCertificate reads a PEM encoded X.509 certificate from the given input.
+func parsePEMCertificate(data []byte) (*x509.Certificate, error) {
+	if len(data) == 0 {
+		return nil, errors.New("no data")
+	}
 
-	_, url, err := asGoDID.ResolveEndpointURL("NutsComm")
-	// remove grpc://
-	stripped := url[7:]
+	var block *pem.Block
 
-	return stripped, err
+	block, data = pem.Decode(data)
+	if block == nil {
+		return nil, errors.New("unable to decode PEM encoded data")
+	}
+
+	if block.Type != "CERTIFICATE" {
+		return nil, errors.New("data does not encode a certificate")
+	}
+
+	certificate, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse certificate: %w", err)
+	}
+
+	return certificate, nil
 }
 
 // NodeContactInfo is a helper structure
