@@ -9,7 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/nats-io/nats.go v1.27.1
-	github.com/nuts-foundation/go-did v0.5.1
+	github.com/nuts-foundation/go-did v0.6.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
@@ -51,7 +51,6 @@ require (
 	github.com/nats-io/nats-server/v2 v2.9.18 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
-	github.com/nuts-foundation/did-ockam v0.0.0-20230313074753-fafd938c948c // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
