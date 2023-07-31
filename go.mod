@@ -3,7 +3,7 @@ module nuts-foundation/nuts-monitor
 go 1.20
 
 require (
-	github.com/deepmap/oapi-codegen v1.13.0
+	github.com/deepmap/oapi-codegen v1.13.1
 	github.com/google/uuid v1.3.0
 	github.com/knadh/koanf v1.5.0
 	github.com/labstack/echo/v4 v4.11.1
