@@ -19,7 +19,7 @@
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^5.0.0",
     "@vue/compiler-sfc": "^3.3.4",
-    "autoprefixer": "^10.4.15",
+    "autoprefixer": "^10.4.16",
     "chai": "^4.3.8",
     "chai-http": "^4.4.0",
     "child-process": "^1.0.2",
