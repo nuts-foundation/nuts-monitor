@@ -7,7 +7,7 @@ require (
 	github.com/knadh/koanf v1.5.0
 	github.com/labstack/echo/v4 v4.11.2
 	github.com/lestrrat-go/jwx v1.2.26
-	github.com/nats-io/nats.go v1.30.2
+	github.com/nats-io/nats.go v1.31.0
 	github.com/nuts-foundation/go-did v0.6.5
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/sirupsen/logrus v1.9.3
@@ -35,8 +35,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/nats-io/jwt/v2 v2.5.0 // indirect
-	github.com/nats-io/nats-server/v2 v2.9.18 // indirect
 	github.com/nats-io/nkeys v0.4.5 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
