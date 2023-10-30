@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/uuid v1.3.1
 	github.com/knadh/koanf v1.5.0
-	github.com/labstack/echo/v4 v4.11.1
+	github.com/labstack/echo/v4 v4.11.2
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/nats-io/nats.go v1.30.2
 	github.com/nuts-foundation/go-did v0.6.5
@@ -45,7 +45,7 @@ require (
 	github.com/shengdoushi/base58 v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
