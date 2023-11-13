@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/uuid v1.4.0
 	github.com/knadh/koanf v1.5.0
-	github.com/labstack/echo/v4 v4.11.2
+	github.com/labstack/echo/v4 v4.11.3
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/nats-io/nats.go v1.31.0
 	github.com/nuts-foundation/go-did v0.7.1
