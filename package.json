@@ -24,7 +24,7 @@
     "chai-http": "^4.4.0",
     "child-process": "^1.0.2",
     "css-loader": "^6.8.1",
-    "eslint": "^8.53.0",
+    "eslint": "^8.54.0",
     "eslint-plugin-vue": "^9.18.1",
     "html-webpack-plugin": "^5.5.3",
     "mocha": "^10.2.0",
