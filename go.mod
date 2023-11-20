@@ -9,7 +9,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/nats-io/nats.go v1.31.0
 	github.com/nuts-foundation/go-did v0.7.1
-	github.com/oapi-codegen/runtime v1.0.0
+	github.com/oapi-codegen/runtime v1.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
