@@ -28,7 +28,7 @@
     "eslint-plugin-vue": "^9.18.1",
     "html-webpack-plugin": "^5.5.3",
     "mocha": "^10.2.0",
-    "postcss": "^8.4.31",
+    "postcss": "^8.4.33",
     "postcss-loader": "^7.3.3",
     "puppeteer": "^21.5.1",
     "style-loader": "^3.3.3",
