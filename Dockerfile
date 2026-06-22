@@ -12,7 +12,7 @@ RUN npm run dist
 #
 # Build backend
 #
-FROM golang:1.21.4-alpine as backend-builder
+FROM golang:1.26.4-alpine as backend-builder
 
 ARG TARGETARCH
 ARG TARGETOS
@@ -38,7 +38,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o
 #
 # Runtime
 #
-FROM alpine:3.18
+FROM alpine:3.24
 RUN apk update \
   && apk add --no-cache \
              tzdata \
