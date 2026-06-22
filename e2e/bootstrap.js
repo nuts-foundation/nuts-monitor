@@ -15,7 +15,7 @@ const opts = {
 before (async () => {
     global.expect = expect;
     global.browser = await puppeteer.launch(opts);
-    const dockerProcess = process.spawn('docker',["run", "-p", "1323:1323", "-e", "NUTS_STRICTMODE=false", "-e", "NUTS_NETWORK_ENABLETLS=false", "-e", "NUTS_AUTH_CONTRACTVALIDATORS=dummy", "nutsfoundation/nuts-node"])
+    const dockerProcess = process.spawn('docker',["run", "-p", "1323:1323", "-e", "NUTS_STRICTMODE=false", "-e", "NUTS_NETWORK_ENABLETLS=false", "-e", "NUTS_AUTH_CONTRACTVALIDATORS=dummy", "nutsfoundation/nuts-node:v5.4.25"])
 
     // Wait for the container to output "STARTED" in its stdout
     await Promise.race([
@@ -40,7 +40,7 @@ before (async () => {
         new Promise((resolve, reject) => {
             setTimeout(() => {
                 reject(new Error('Timed out waiting for Docker container to start'));
-            }, 5000);
+            }, 120000);
         })
     ]);
 
