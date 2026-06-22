@@ -8,7 +8,7 @@ const opts = {
     headless: true,
     slowMo: 1,
     timeout: 0,
-    args: ['--window-size=1600,1200']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1600,1200']
 }
 
 /* call the before for puppeteer for execute this code before start testing */
