@@ -11,6 +11,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Go
   - package-ecosystem: "gomod"
@@ -18,6 +25,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Docker
   - package-ecosystem: "docker"
@@ -25,8 +39,22 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      docker:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
