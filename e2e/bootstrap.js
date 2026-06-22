@@ -40,7 +40,7 @@ before (async () => {
         new Promise((resolve, reject) => {
             setTimeout(() => {
                 reject(new Error('Timed out waiting for Docker container to start'));
-            }, 5000);
+            }, 120000);
         })
     ]);
 
