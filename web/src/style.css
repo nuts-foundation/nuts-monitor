@@ -1,6 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * Import Tailwind's utilities OUTSIDE a cascade layer (instead of the default
+ * `@import "tailwindcss"`, which puts them in `@layer utilities`). Vuetify ships
+ * an unlayered `* { margin: 0 }` reset, and unlayered CSS always beats layered
+ * CSS — so layered utilities like `ml-72`/`mt-8` would lose to it. Keeping
+ * utilities unlayered restores the v3 behaviour where they win by specificity.
+ */
+@layer theme, base, components;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@config "../../tailwind.config.js";
 
 body {
     @apply text-gray-600 bg-gray-200;

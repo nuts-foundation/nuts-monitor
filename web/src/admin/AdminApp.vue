@@ -128,6 +128,8 @@ export default {
 </script>
 
 <style>
+@reference "../style.css";
+
 .menu-link {
   @apply rounded mb-2 py-3 px-3 inline-flex items-center text-gray-500 text-sm;
 }
