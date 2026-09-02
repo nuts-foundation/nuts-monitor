@@ -10,7 +10,7 @@ require (
 	github.com/nats-io/nats.go v1.53.1
 	github.com/nuts-foundation/go-did v0.22.0
 	github.com/oapi-codegen/runtime v1.7.0
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.55.0
