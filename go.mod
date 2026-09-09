@@ -1,6 +1,6 @@
 module nuts-foundation/nuts-monitor
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/google/uuid v1.6.0
@@ -13,7 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 )
 
 require (
