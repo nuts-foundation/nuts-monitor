@@ -12,7 +12,7 @@ RUN npm run dist
 #
 # Build backend
 #
-FROM golang:1.27.1-alpine as backend-builder
+FROM golang:1.27.3-alpine as backend-builder
 
 ARG TARGETARCH
 ARG TARGETOS
@@ -43,6 +43,7 @@ RUN apk update \
   && apk add --no-cache \
              tzdata \
              curl \
+             ca-certificates \
   && update-ca-certificates
 RUN mkdir /app && cd /app
 WORKDIR /app

@@ -9,15 +9,15 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/providers/posflag v1.0.2
 	github.com/knadh/koanf/v2 v2.3.7
-	github.com/labstack/echo/v4 v4.16.0
+	github.com/labstack/echo/v4 v4.16.2
 	github.com/lestrrat-go/jwx v1.2.31
-	github.com/nats-io/nats.go v1.54.0
+	github.com/nats-io/nats.go v1.55.0
 	github.com/nuts-foundation/go-did v0.22.2
-	github.com/oapi-codegen/runtime v1.7.0
+	github.com/oapi-codegen/runtime v1.8.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/crypto v0.57.0
+	golang.org/x/crypto v0.58.0
 )
 
 require (
@@ -54,8 +54,8 @@ require (
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
