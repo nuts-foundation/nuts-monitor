@@ -20,7 +20,7 @@ package data
 
 import (
 	"errors"
-	"github.com/lestrrat-go/jwx/jws"
+	"github.com/lestrrat-go/jwx/v3/jws"
 	"strings"
 	"time"
 )
@@ -52,29 +52,30 @@ func FromJWS(transaction string) (*Transaction, error) {
 	// first extract the signature time from the "sigt" field
 	// the "sigt" field is a Unix Timestamp in seconds
 	// we convert it to an int64
-	sigt, ok := jwsToken.Signatures()[0].ProtectedHeaders().Get("sigt")
-	if !ok {
+	headers := jwsToken.Signatures()[0].ProtectedHeaders()
+	var sigt float64
+	if err := headers.Get("sigt", &sigt); err != nil {
 		return nil, ErrNoSigTime
 	}
 	// parse the sigt string value to time field
-	sigTime := time.Unix(int64(sigt.(float64)), 0)
+	sigTime := time.Unix(int64(sigt), 0)
 
 	// then extract the Content-Type from the "cty" field
-	contentType := jwsToken.Signatures()[0].ProtectedHeaders().ContentType()
+	contentType, _ := headers.ContentType()
 
 	// the signer can either be extracted from the "kid" header or from the embedded key
 	// we first try to extract it from the "kid" header
-	signer, ok := jwsToken.Signatures()[0].ProtectedHeaders().Get("kid")
+	signer, ok := headers.KeyID()
 	if ok {
 		// the kid is a combination of DID and key ID, we only want the DID part
 		// the DID is the part before the first #
 		// example: did:nuts:0x1234567890abcdef#key-1 -> did:nuts:0x1234567890abcdef
 		// check if # is contained in the string, return an error if not
-		index := strings.Index(signer.(string), "#")
+		index := strings.Index(signer, "#")
 		if index == -1 {
 			return nil, ErrInvalidSigner
 		}
-		return &Transaction{ContentType: contentType, Signer: signer.(string)[:index], SigTime: sigTime}, nil
+		return &Transaction{ContentType: contentType, Signer: signer[:index], SigTime: sigTime}, nil
 	}
 
 	// if the "kid" header is not present, we try to extract the signer from the embedded key
@@ -82,9 +83,8 @@ func FromJWS(transaction string) (*Transaction, error) {
 	// the "kid" header is a combination of DID and key ID, we only want the DID part
 	// the DID is the part before the first #
 	// example: did:nuts:0x1234567890abcdef#key-1 -> did:nuts:0x1234567890abcdef
-	jwk := jwsToken.Signatures()[0].ProtectedHeaders().JWK()
-	if jwk != nil {
-		kid := jwk.KeyID()
+	if jwk, ok := headers.JWK(); ok {
+		kid, _ := jwk.KeyID()
 		index := strings.Index(kid, "#")
 		if index == -1 {
 			return nil, ErrInvalidSigner

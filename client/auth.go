@@ -25,9 +25,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"nuts-foundation/nuts-monitor/config"
 	"time"
 )
@@ -53,7 +53,11 @@ func createTokenGenerator(config config.Config) AuthorizationTokenGenerator {
 			JwtID(uuid.New().String()).
 			Build()
 
-		bytes, err := jwt.Sign(token, jwa.SignatureAlgorithm(key.Algorithm()), key)
+		alg, ok := key.Algorithm()
+		if !ok {
+			return "", errors.New("signing key has no algorithm")
+		}
+		bytes, err := jwt.Sign(token, jwt.WithKey(alg, key))
 		if err != nil {
 			return "", err
 		}
@@ -63,14 +67,14 @@ func createTokenGenerator(config config.Config) AuthorizationTokenGenerator {
 
 func jwkKey(signer crypto.Signer) (key jwk.Key, err error) {
 	// ssh key format
-	key, err = jwk.New(signer)
+	key, err = jwk.Import(signer)
 	if err != nil {
 		return nil, err
 	}
 
 	switch k := signer.(type) {
 	case *rsa.PrivateKey:
-		key.Set(jwk.AlgorithmKey, jwa.PS512)
+		key.Set(jwk.AlgorithmKey, jwa.PS512())
 	case *ecdsa.PrivateKey:
 		var alg jwa.SignatureAlgorithm
 		alg, err = ecAlg(k)
@@ -93,11 +97,11 @@ func ecAlg(key *ecdsa.PrivateKey) (alg jwa.SignatureAlgorithm, err error) {
 func ecAlgUsingPublicKey(key ecdsa.PublicKey) (alg jwa.SignatureAlgorithm, err error) {
 	switch key.Params().BitSize {
 	case 256:
-		alg = jwa.ES256
+		alg = jwa.ES256()
 	case 384:
-		alg = jwa.ES384
+		alg = jwa.ES384()
 	case 521:
-		alg = jwa.ES512
+		alg = jwa.ES512()
 	default:
 		err = errors.New("unsupported key")
 	}
