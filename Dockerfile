@@ -43,6 +43,7 @@ RUN apk update \
   && apk add --no-cache \
              tzdata \
              curl \
+             ca-certificates \
   && update-ca-certificates
 RUN mkdir /app && cd /app
 WORKDIR /app
