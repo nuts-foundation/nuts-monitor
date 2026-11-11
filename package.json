@@ -19,7 +19,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@fullhuman/postcss-purgecss": "^8.0.0",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.5",
     "@vue/compiler-sfc": "^3.3.8",
     "chai": "^6.3.0",
     "chai-http": "^5.2.1",
@@ -41,10 +41,10 @@
     "webpack-cli": "^7.3.1"
   },
   "dependencies": {
-    "d3": "^7.9.0",
+    "d3": "^7.9.2",
     "d3-tip": "^0.9.1",
-    "vue": "^3.5.44",
+    "vue": "^3.5.45",
     "vue-router": "^5.4.0",
-    "vuetify": "^4.3.1"
+    "vuetify": "^4.3.2"
   }
 }
