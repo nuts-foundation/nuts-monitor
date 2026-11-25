@@ -9,9 +9,9 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/providers/posflag v1.0.2
 	github.com/knadh/koanf/v2 v2.4.1
-	github.com/labstack/echo/v4 v4.16.5
+	github.com/labstack/echo/v4 v4.16.6
 	github.com/lestrrat-go/jwx/v3 v3.4.0
-	github.com/nats-io/nats.go v1.55.0
+	github.com/nats-io/nats.go v1.56.0
 	github.com/nuts-foundation/go-did v0.22.2
 	github.com/oapi-codegen/runtime v1.8.0
 	github.com/sirupsen/logrus v1.10.2
