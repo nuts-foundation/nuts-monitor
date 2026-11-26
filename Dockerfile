@@ -2,6 +2,8 @@
 # Build frontend
 #
 FROM node:lts-alpine as frontend-builder
+# puppeteer is only used by the e2e tests, which don't run in the image
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
